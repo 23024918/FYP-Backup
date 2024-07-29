@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <title>Airplane Ticket App</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Airplane Ticket App</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="collapsibleNavbar">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/addTicket">Add New Ticket</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/contact">Contact Us</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/feedback">Feedback</a>
+                    </li>
+                </ul>
+                <form class="d-flex" action="/search" method="GET">
+                    <input class="form-control me-2" type="search" placeholder="Search Tickets" aria-label="Search" name="query">
+                    <button class="btn btn-outline-light" type="submit">Search</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <br>
+        <div class="text-center">
+            <h2>Tickets from Airplane Ticket App Database</h2>
+        </div>
+        <br>
+        <table class="table table-hover small text-center">
+            <thead>
+                <tr>
+                    <th width="30">Airline Name</th>
+                    <th width="30">Airline Logo</th>
+                    <th width="30">Departure City</th>
+                    <th width="30">Arrival City</th>
+                    <th width="30">Departure Date</th>
+                    <th width="30">Departure Time</th>
+                    <th width="30">Arrival Date</th>
+                    <th width="30">Arrival Time</th>
+                    <th width="30">Price</th>
+                    <th width="30">Referral URL</th>
+                    <th width="30">Edit</th>
+                    <th width="30">Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% for(let i=0; i < ticket.length; i++) { %>
+                    <tr>
+                        <td><a href="/ticket/<%= ticket[i].id %>"><%= ticket[i].airline_name %></a></td>
+                        <td><img src="/images/<%= ticket[i].airline_logo %>" width="50%"></td>
+                        <td><%= ticket[i].departure_city %></td>
+                        <td><%= ticket[i].arrival_city %></td>
+                        <td>
+                            <% 
+                                var departure_date = new Date(ticket[i].departure_date);
+                                var day = ("0" + departure_date.getDate()).slice(-2); // Ensure two digits
+                                var month = ("0" + (departure_date.getMonth() + 1)).slice(-2); // Ensure two digits, month is 0-indexed
+                                var year = departure_date.getFullYear();
+                                var formatteddeparture_date = day + '/' + month + '/' + year;
+                            %>
+                            <%= formatteddeparture_date %>
+                        </td>
+                        <td><%= ticket[i].departure_time %></td>
+                        <td>
+                            <% 
+                                var arrival_date = new Date(ticket[i].arrival_date);
+                                var day = ("0" + arrival_date.getDate()).slice(-2); // Ensure two digits
+                                var month = ("0" + (arrival_date.getMonth() + 1)).slice(-2); // Ensure two digits, month is 0-indexed
+                                var year = arrival_date.getFullYear();
+                                var formattedarrival_date = day + '/' + month + '/' + year;
+                            %>
+                            <%= formattedarrival_date %>
+                        </td>
+                        <td><%= ticket[i].arrival_time %></td>
+                        <td><%= ticket[i].price %></td>
+                        <td><a href="<%= ticket[i].referral_url %>">Ticket Website</a></td>
+                        <!--Edit Link-->
+                        <td><a href="/editTicket/<%= ticket[i].id %>">Edit</a></td>
+                        <!--Delete Link-->
+                        <td><a href="/deleteTicket/<%= ticket[i].id %>" onclick="return confirm('Are you sure you want to delete this ticket?')">Delete</a></td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+
+<!-- Tan Ye Kai 23024918 -->

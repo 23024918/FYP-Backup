@@ -1,0 +1,80 @@
+<!-- ticket.ejs -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <title>Ticket Details</title>
+</head>
+<body>
+  <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">Airplane Ticket App</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="collapsibleNavbar">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/addTicket">Add New Ticket</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/contact">Contact Us</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/feedback">Feedback</a>
+          </li>
+        </ul>
+        <form class="d-flex" action="/search" method="GET">
+          <input class="form-control me-2" type="search" placeholder="Search Tickets" aria-label="Search" name="query">
+          <button class="btn btn-outline-light" type="submit">Search</button>
+        </form>
+      </div>
+    </div>
+  </nav>
+    
+  <div class="container">
+    <br>
+    <div class="text-center"><h2>Ticket Details</h2></div>
+    <br>
+    <% if (ticket) { %> <!-- Check if ticket data exists -->
+      <div>
+        <p><b>Airline Name:</b><br> <%= ticket.airline_name %></p>
+        <p><b>Logo Image:</b><br> <img src="/images/<%= ticket.airline_logo %>" width="20%"></p>
+        <p><b>Departure City:</b><br> <%= ticket.departure_city %></p>
+        <p><b>Arrival City:</b><br> <%= ticket.arrival_city %></p>
+        <p><b>Departure Date:</b><br> 
+          <% 
+            var departure_date = new Date(ticket.departure_date);
+            var formatteddeparture_date = ((departure_date.getMonth() + 1) + '').padStart(2, '0') + '/' + 
+                                          (departure_date.getDate() + '').padStart(2, '0') + '/' + 
+                                          departure_date.getFullYear();
+          %>
+          <%= formatteddeparture_date %>
+        </p>
+        <p><b>Departure Time:</b><br> <%= ticket.departure_time %></p>
+        <p><b>Arrival Date:</b><br> 
+          <% 
+            var arrival_date = new Date(ticket.arrival_date);
+            var formattedarrival_date = ((arrival_date.getMonth() + 1) + '').padStart(2, '0') + '/' + 
+                                        (arrival_date.getDate() + '').padStart(2, '0') + '/' + 
+                                        arrival_date.getFullYear();
+          %>
+          <%= formattedarrival_date %>
+        </p>
+        <p><b>Arrival Time:</b><br> <%= ticket.arrival_time %></p>
+        <p><b>Price:</b><br> <%= ticket.price %></p>
+        <p><b>Referral URL:</b><br> <a href="<%= ticket.referral_url %>">Ticket Website</a></p>
+      </div>
+    <% } else { %>
+      <p>No ticket found.</p>
+    <% } %>
+    <a href="/">Back</a>
+  </div>
+</body>
+</html>
+
+<!-- Tan Ye Kai 23024918 -->
