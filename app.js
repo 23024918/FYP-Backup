@@ -56,7 +56,7 @@ app.get('/', (req, res) => {
 // Search Bar
 app.get('/search', (req, res) => {
   const query = req.query.query;
-  connection.query('SELECT * FROM ticket WHERE departure_city LIKE ? OR arrival_city LIKE ? OR airline_name LIKE ?', [`%${query}%`, `%${query}%`, `%${query}`], (error, searchResults) => {
+  connection.query('SELECT * FROM ticket WHERE departure_city LIKE ? OR arrival_city LIKE ? OR airline_name LIKE ?', [`%${query}%`, `%${query}%`, `%${query}%`], (error, searchResults) => {
     if (error) {
       console.error('Database query error:', error.message);
       return res.status(500).send('Error searching for tickets');
