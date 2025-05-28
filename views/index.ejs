@@ -11,7 +11,6 @@
       background-color: #f8f9fa;
     }
 
-    /* Sidebar Styles */
     .sidebar {
       width: 120px;
       height: 100vh;
@@ -48,7 +47,6 @@
       color: white;
     }
 
-    /* Main Content Styles */
     .main-content {
       margin-left: 120px;
       padding: 40px;
@@ -70,9 +68,18 @@
     .dashboard-box {
       background-color: #d9d9d9;
       border-radius: 20px;
-      height: 100px;
+      min-height: 100px;
       margin: 20px auto;
       width: 80%;
+      padding: 15px 25px;
+    }
+
+    .dashboard-box h5 {
+      font-weight: bold;
+    }
+
+    .dashboard-box small {
+      color: #555;
     }
   </style>
 </head>
@@ -93,19 +100,31 @@
     <!-- Search Bar -->
     <div class="search-container">
       <form class="d-flex w-50" action="/search" method="GET">
-        <input class="form-control me-2" type="search" placeholder="Search ISLPs" aria-label="Search" name="query">
+        <input class="form-control me-2" type="search" placeholder="Search Tickets" aria-label="Search" name="query">
         <button class="btn btn-dark" type="submit">Search</button>
       </form>
     </div>
 
-    <!-- Dashboard Boxes -->
-    <div class="dashboard-box"></div>
-    <div class="dashboard-box"></div>
-    <div class="dashboard-box"></div>
-    <div class="dashboard-box"></div>
-  </div>
+    <!-- All Tickets from Database -->
+    <% for (let i = 0; i < ticket.length; i++) { %>
+      <div class="dashboard-box">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5><%= ticket[i].airline_name %> (<%= ticket[i].departure_city %> ➔ <%= ticket[i].arrival_city %>)</h5>
+          <a href="/ticket/<%= ticket[i].id %>" class="btn btn-sm btn-outline-dark">View</a>
+        </div>
+        <small>
+          Departure: 
+          <%= new Date(ticket[i].departure_date).toLocaleDateString('en-GB') %> @ <%= ticket[i].departure_time %> | 
+          Arrival: 
+          <%= new Date(ticket[i].arrival_date).toLocaleDateString('en-GB') %> @ <%= ticket[i].arrival_time %> |
+          Price: $<%= ticket[i].price %>
+        </small>
+      </div>
+    <% } %>
 
+  </div>
 </body>
 </html>
+
 
 <!-- Tan Ye Kai 23024918 -->
