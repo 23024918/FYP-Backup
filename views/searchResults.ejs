@@ -97,6 +97,7 @@
             <h5><%= ticket.airline_name %> (<%= ticket.departure_city %> ➔ <%= ticket.arrival_city %>)</h5>
             <div>
               <a href="/ticket/<%= ticket.id %>" class="btn btn-sm btn-outline-dark me-2">View</a>
+              <a href="/editTicket/<%= ticket.id %>" class="btn btn-sm btn-outline-dark me-2">Edit</a>
               <a href="/deleteTicket/<%= ticket.id %>" class="btn btn-sm btn-outline-danger"
                  onclick="return confirm('Are you sure you want to delete this ticket?');">Delete</a>
             </div>
