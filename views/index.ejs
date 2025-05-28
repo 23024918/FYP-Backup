@@ -121,8 +121,10 @@
       <%= new Date(ticket[i].departure_date).toLocaleDateString('en-GB') %> @ <%= ticket[i].departure_time %> | 
       Arrival: 
       <%= new Date(ticket[i].arrival_date).toLocaleDateString('en-GB') %> @ <%= ticket[i].arrival_time %> |
-      Price: $<%= ticket[i].price %>
+      Price: $<%= ticket[i].price %> |
+      <a href="<%= ticket[i].referral_url %>" target="_blank">Ticket Website</a>
     </small>
+
   </div>
 <% } %>
   </div>
