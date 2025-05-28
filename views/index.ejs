@@ -10,60 +10,102 @@
     body {
       background-color: #f8f9fa;
     }
+
+    /* Sidebar Styles */
     .sidebar {
-      width: 200px;
+      width: 120px;
       height: 100vh;
-      background-color: #343a40;
+      background-color: #d9d9d9;
       position: fixed;
       top: 0;
       left: 0;
       padding-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
+
     .sidebar a {
-      display: block;
-      color: #fff;
-      padding: 16px;
+      width: 80px;
+      height: 80px;
+      margin: 10px 0;
+      background-color: #c4c4c4;
+      color: black;
+      text-align: center;
+      line-height: 80px;
       text-decoration: none;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 500;
     }
+
     .sidebar a:hover {
-      background-color: #495057;
+      background-color: #b0b0b0;
     }
+
+    .sidebar a:first-child {
+      background-color: black;
+      color: white;
+    }
+
+    /* Main Content Styles */
     .main-content {
-      margin-left: 200px;
+      margin-left: 120px;
       padding: 40px;
     }
+
     .dashboard-title {
       text-align: center;
       font-weight: bold;
-      margin-bottom: 40px;
+      margin-bottom: 30px;
+      font-size: 2rem;
     }
+
+    .search-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+
     .dashboard-box {
       background-color: #d9d9d9;
       border-radius: 20px;
       height: 100px;
-      margin-bottom: 20px;
+      margin: 20px auto;
+      width: 80%;
     }
   </style>
 </head>
 <body>
+
   <!-- Sidebar -->
   <div class="sidebar">
     <a href="/">Home</a>
-    <a href="/addTicket">Add New Ticket</a>
-    <a href="/contact">Contact Us</a>
+    <a href="/addTicket">Add</a>
+    <a href="/contact">Contact</a>
     <a href="/feedback">Feedback</a>
   </div>
 
   <!-- Main Content -->
   <div class="main-content">
     <h2 class="dashboard-title">ISLP</h2>
-    <div class="dashboard-box w-100"></div>
-    <div class="dashboard-box w-100"></div>
-    <div class="dashboard-box w-100"></div>
-    <div class="dashboard-box w-100"></div>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+      <form class="d-flex w-50" action="/search" method="GET">
+        <input class="form-control me-2" type="search" placeholder="Search ISLPs" aria-label="Search" name="query">
+        <button class="btn btn-dark" type="submit">Search</button>
+      </form>
+    </div>
+
+    <!-- Dashboard Boxes -->
+    <div class="dashboard-box"></div>
+    <div class="dashboard-box"></div>
+    <div class="dashboard-box"></div>
+    <div class="dashboard-box"></div>
   </div>
+
 </body>
 </html>
-
 
 <!-- Tan Ye Kai 23024918 -->
