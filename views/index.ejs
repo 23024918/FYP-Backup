@@ -100,28 +100,31 @@
     <!-- Search Bar -->
     <div class="search-container">
       <form class="d-flex w-50" action="/search" method="GET">
-        <input class="form-control me-2" type="search" placeholder="Search Tickets" aria-label="Search" name="query">
+        <input class="form-control me-2" type="search" placeholder="Search ISLPs" aria-label="Search" name="query">
         <button class="btn btn-dark" type="submit">Search</button>
       </form>
     </div>
 
     <!-- All Tickets from Database -->
     <% for (let i = 0; i < ticket.length; i++) { %>
-      <div class="dashboard-box">
-        <div class="d-flex justify-content-between align-items-center">
-          <h5><%= ticket[i].airline_name %> (<%= ticket[i].departure_city %> ➔ <%= ticket[i].arrival_city %>)</h5>
-          <a href="/ticket/<%= ticket[i].id %>" class="btn btn-sm btn-outline-dark">View</a>
-        </div>
-        <small>
-          Departure: 
-          <%= new Date(ticket[i].departure_date).toLocaleDateString('en-GB') %> @ <%= ticket[i].departure_time %> | 
-          Arrival: 
-          <%= new Date(ticket[i].arrival_date).toLocaleDateString('en-GB') %> @ <%= ticket[i].arrival_time %> |
-          Price: $<%= ticket[i].price %>
-        </small>
+  <div class="dashboard-box">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5><%= ticket[i].airline_name %> (<%= ticket[i].departure_city %> ➔ <%= ticket[i].arrival_city %>)</h5>
+      <div>
+        <a href="/ticket/<%= ticket[i].id %>" class="btn btn-sm btn-outline-dark me-2">View</a>
+        <a href="/deleteTicket/<%= ticket[i].id %>" class="btn btn-sm btn-outline-danger"
+           onclick="return confirm('Are you sure you want to delete this ISLP?');">Delete</a>
       </div>
-    <% } %>
-
+    </div>
+    <small>
+      Departure: 
+      <%= new Date(ticket[i].departure_date).toLocaleDateString('en-GB') %> @ <%= ticket[i].departure_time %> | 
+      Arrival: 
+      <%= new Date(ticket[i].arrival_date).toLocaleDateString('en-GB') %> @ <%= ticket[i].arrival_time %> |
+      Price: $<%= ticket[i].price %>
+    </small>
+  </div>
+<% } %>
   </div>
 </body>
 </html>
