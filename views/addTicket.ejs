@@ -1,80 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <title>Add New Ticket</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create New Project</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+
+    .sidebar {
+      width: 120px;
+      height: 100vh;
+      background-color: #d9d9d9;
+      position: fixed;
+      top: 0;
+      left: 0;
+      padding-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .sidebar a {
+      width: 80px;
+      height: 80px;
+      margin: 10px 0;
+      background-color: #c4c4c4;
+      color: black;
+      text-align: center;
+      line-height: 80px;
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .sidebar a:hover {
+      background-color: #b0b0b0;
+    }
+
+    .sidebar a.add-active {
+      background-color: black;
+      color: white;
+    }
+
+    .main-content {
+      margin-left: 120px;
+      padding: 40px;
+    }
+
+    .dashboard-title {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 30px;
+      font-size: 2rem;
+    }
+  </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">Airplane Ticket App</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="collapsibleNavbar">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/addTicket">Add New Ticket</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/contact">Contact Us</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/feedback">Feedback</a>
-                    </li>
-                </ul>
-                <form class="d-flex" action="/search" method="GET">
-                    <input class="form-control me-2" type="search" placeholder="Search Tickets" aria-label="Search" name="query">
-                    <button class="btn btn-outline-light" type="submit">Search</button>
-                </form>
-            </div>
-        </div>
-    </nav>
 
-    <div class="container">
-        <br>
-        <div class="text-center"><h2>Add New Ticket</h2></div>
-        <br>
-        <div class="text-center">
-            <form action="/addTicket" method="POST" enctype="multipart/form-data">
-                <label for="airline_name">Airline Name:</label><br>
-                <input type="text" id="airline_name" name="airline_name" required><br><br>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <a href="/">Home</a>
+    <a href="/addTicket" class="add-active">Add</a>
+    <a href="/contact">Contact</a>
+    <a href="/feedback">Feedback</a>
+  </div>
 
-                <label for="departure_city">Departure City:</label><br>
-                <input type="text" id="departure_city" name="departure_city" required><br><br>
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="dashboard-title">Create New Project</div>
 
-                <label for="arrival_city">Arrival City:</label><br>
-                <input type="text" id="arrival_city" name="arrival_city" required><br><br>
+    <!-- Add Ticket Form -->
+    <form action="/addTicket" method="POST" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label for="airline_name" class="form-label">Airline Name:</label>
+        <input type="text" class="form-control" id="airline_name" name="airline_name" required>
+      </div>
 
-                <label for="departure_date">Departure Date:</label><br>
-                <input type="date" id="departure_date" name="departure_date" min="0" step="1" required><br><br>
+      <div class="mb-3">
+        <label for="departure_city" class="form-label">Departure City:</label>
+        <input type="text" class="form-control" id="departure_city" name="departure_city" required>
+      </div>
 
-                <label for="departure_time">Departure Time:</label><br>
-                <input type="time" id="departure_time" name="departure_time" min="0" step="1" required><br><br>
+      <div class="mb-3">
+        <label for="arrival_city" class="form-label">Arrival City:</label>
+        <input type="text" class="form-control" id="arrival_city" name="arrival_city" required>
+      </div>
 
-                <label for="arrival_date">Arrival Date:</label><br>
-                <input type="date" id="arrival_date" name="arrival_date" min="0" step="1" required><br><br>
+      <div class="mb-3">
+        <label for="departure_date" class="form-label">Departure Date:</label>
+        <input type="date" class="form-control" id="departure_date" name="departure_date" required>
+      </div>
 
-                <label for="arrival_time">Arrival Time:</label><br>
-                <input type="time" id="arrival_time" name="arrival_time" min="0" step="1" required><br><br>
+      <div class="mb-3">
+        <label for="departure_time" class="form-label">Departure Time:</label>
+        <input type="time" class="form-control" id="departure_time" name="departure_time" required>
+      </div>
 
-                <label for="referral_url">Referral URL:</label><br>
-                <input type="text" id="referral_url" name="referral_url" required><br><br>
+      <div class="mb-3">
+        <label for="arrival_date" class="form-label">Arrival Date:</label>
+        <input type="date" class="form-control" id="arrival_date" name="arrival_date" required>
+      </div>
 
-                <label for="price">Price:</label><br>
-                <input type="number" id="price" name="price" min="0" step="0.01" required><br><br>
+      <div class="mb-3">
+        <label for="arrival_time" class="form-label">Arrival Time:</label>
+        <input type="time" class="form-control" id="arrival_time" name="arrival_time" required>
+      </div>
 
-                <label for="airline_logo">Airline Logo:</label><br>
-                <input type="file" id="airline_logo" name="airline_logo" accept="image/*" required><br><br>
+      <div class="mb-3">
+        <label for="referral_url" class="form-label">Referral URL:</label>
+        <input type="text" class="form-control" id="referral_url" name="referral_url" required>
+      </div>
 
-                <button type="submit">Add Ticket</button>
-            </form>
-        </div>
-    </div>
+      <div class="mb-3">
+        <label for="price" class="form-label">Price:</label>
+        <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="airline_logo" class="form-label">Airline Logo:</label>
+        <input type="file" class="form-control" id="airline_logo" name="airline_logo" accept="image/*" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Add Ticket</button>
+    </form>
+  </div>
+
 </body>
 </html>
+
 
 <!--Tan Ye Kai 23024918-->
