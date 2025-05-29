@@ -17,10 +17,10 @@ const upload = multer({ storage: storage });
 
 // Create MySQL connection 
 const connection = mysql.createConnection({ 
-  host: 'sql.freedb.tech', 
-  user: 'freedb_23024918', 
-  password: '#zRU?FNt4fqYGj$', 
-  database: 'freedb_airplaneticketapp' 
+  host: 'localhost', 
+  user: 'root', 
+  password: '', 
+  database: 'erdforfyp' 
 });
  
 connection.connect((err) => { 
@@ -46,7 +46,7 @@ app.use(express.urlencoded({
 app.use(express.static('public'));
 
 // Define routes
-app.get('/', (req, res) => {
+app.get('/login', (req, res) => {
   connection.query('SELECT * FROM account', (error, results) => {
     if (error) throw error;
     res.render('login', { account: results }); // Render HTML page with data
@@ -56,7 +56,7 @@ app.get('/', (req, res) => {
 app.get('/lecturer', (req, res) => { 
   connection.query('SELECT * FROM project', (error, results) => { 
     if (error) throw error; 
-    res.render('index', { project: results }); // Render HTML page with data 
+    res.render('lecturer', { project: results }); // Render HTML page with data 
   }); 
 });
 
@@ -219,6 +219,6 @@ app.get('/feedback', (req, res) => {
 }); 
 
 const PORT = process.env.PORT || 3000; 
-app.listen(PORT, () => console.log(`Server running http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Server running http://localhost:${PORT}/login`));
 
 // Tan Ye Kai 23024918

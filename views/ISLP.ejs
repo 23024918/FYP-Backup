@@ -91,49 +91,42 @@
     <a href="/feedback">Feedback</a>
   </div>
 
-  <!-- Ticket Details -->
-  <div class="main-content">
-    <% if (ticket) { %>
-      <div class="dashboard-box">
-        <h4 class="text-center">Ticket Details</h4>
-        <p><b>Airline Name:</b> <%= ticket.airline_name %></p>
-        <p><b>Logo Image:</b><br> 
-          <img src="/images/<%= ticket.airline_logo %>" alt="Logo" width="20%">
-        </p>
-        <p><b>Departure City:</b> <%= ticket.departure_city %></p>
-        <p><b>Arrival City:</b> <%= ticket.arrival_city %></p>
-        <p><b>Departure Date:</b> 
-          <% 
-            var departure_date = new Date(ticket.departure_date);
-            var formatteddeparture_date = ((departure_date.getMonth() + 1) + '').padStart(2, '0') + '/' + 
-                                          (departure_date.getDate() + '').padStart(2, '0') + '/' + 
-                                          departure_date.getFullYear();
-          %>
-          <%= formatteddeparture_date %>
-        </p>
-        <p><b>Departure Time:</b> <%= ticket.departure_time %></p>
-        <p><b>Arrival Date:</b> 
-          <% 
-            var arrival_date = new Date(ticket.arrival_date);
-            var formattedarrival_date = ((arrival_date.getMonth() + 1) + '').padStart(2, '0') + '/' + 
-                                        (arrival_date.getDate() + '').padStart(2, '0') + '/' + 
-                                        arrival_date.getFullYear();
-          %>
-          <%= formattedarrival_date %>
-        </p>
-        <p><b>Arrival Time:</b> <%= ticket.arrival_time %></p>
-        <p><b>Price:</b> $<%= ticket.price %></p>
-        <p><b>Referral URL:</b> 
-          <a href="<%= ticket.referral_url %>" target="_blank">Ticket Website</a>
-        </p>
-      </div>
-      <div class="text-center">
-        <a href="/" class="btn btn-dark back-btn">Back to Home</a>
-      </div>
-    <% } else { %>
-      <p class="text-center mt-5">No ticket found.</p>
-    <% } %>
-  </div>
+<!-- Project Details -->
+<div class="main-content">
+  <% if (project) { %>
+    <div class="dashboard-box">
+      <h4 class="text-center">Project Details</h4>
+      <p><b>Project Title:</b> <%= project.project_title %></p>
+      <p><b>Description:</b> <%= project.description %></p>
+      <p><b>Status ID:</b> <%= project.statusid %></p>
+      <p><b>Status:</b> <%= project.project_status %></p>
+      <p><b>Start Date:</b> 
+        <% 
+          var startDate = new Date(project.project_start);
+          var formattedStartDate = ((startDate.getMonth() + 1) + '').padStart(2, '0') + '/' + 
+                                   (startDate.getDate() + '').padStart(2, '0') + '/' + 
+                                   startDate.getFullYear();
+        %>
+        <%= formattedStartDate %>
+      </p>
+      <p><b>End Date:</b> 
+        <% 
+          var endDate = new Date(project.project_end);
+          var formattedEndDate = ((endDate.getMonth() + 1) + '').padStart(2, '0') + '/' + 
+                                 (endDate.getDate() + '').padStart(2, '0') + '/' + 
+                                 endDate.getFullYear();
+        %>
+        <%= formattedEndDate %>
+      </p>
+    </div>
+    <div class="text-center">
+      <a href="/" class="btn btn-dark back-btn">Back to Home</a>
+    </div>
+  <% } else { %>
+    <p class="text-center mt-5">No project found.</p>
+  <% } %>
+</div>
+
 
 </body>
 </html>
