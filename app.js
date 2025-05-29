@@ -46,42 +46,49 @@ app.use(express.urlencoded({
 app.use(express.static('public'));
 
 // Define routes
-app.get('/', (req, res) => { 
-  connection.query('SELECT * FROM ticket', (error, results) => { 
+app.get('/', (req, res) => {
+  connection.query('SELECT * FROM account', (error, results) => {
+    if (error) throw error;
+    res.render('login', { account: results }); // Render HTML page with data
+  });
+});
+
+app.get('/lecturer', (req, res) => { 
+  connection.query('SELECT * FROM project', (error, results) => { 
     if (error) throw error; 
-    res.render('index', { ticket: results }); // Render HTML page with data 
+    res.render('index', { project: results }); // Render HTML page with data 
   }); 
 });
 
 // Search Bar
 app.get('/search', (req, res) => {
   const query = req.query.query;
-  connection.query('SELECT * FROM ticket WHERE departure_city LIKE ? OR arrival_city LIKE ? OR airline_name LIKE ?', [`%${query}%`, `%${query}%`, `%${query}%`], (error, searchResults) => {
+  connection.query('SELECT * FROM project WHERE project_title LIKE ?', [`%${query}%`], (error, searchResults) => {
     if (error) {
       console.error('Database query error:', error.message);
-      return res.status(500).send('Error searching for tickets');
+      return res.status(500).send('Error searching for ISLP');
     }
     res.render('searchResults', { query, results: searchResults });
   });
 });
 
-app.get('/ticket/:id', (req, res) => {
+app.get('/lecturer/:id', (req, res) => {
   // Extract the ticket ID from the request parameters
-  const id = req.params.id;
-  const sql = 'SELECT * FROM ticket WHERE id = ?';
-  // Fetch data from MySQL based on the ticket ID
-  connection.query(sql, [id], (error, results) => {
+  const projectid = req.params.projectid;
+  const sql = 'SELECT * FROM project WHERE id = ?';
+  // Fetch data from MySQL based on the project ID
+  connection.query(sql, [projectid], (error, results) => {
     if (error) {
       console.error('Database query error:', error.message);
-      return res.status(500).send('Error Retrieving airline by ID');
+      return res.status(500).send('Error Retrieving ISLP by ID');
     }
-    // Check if any ticket with the given ID was found
+    // Check if any ISLP with the given ID was found
     if (results.length > 0) {
-      // Render HTML page with the ticket data
-      res.render('ticket', { ticket: results[0] });
+      // Render HTML page with the ISLP data
+      res.render('pro', { project: results[0] });
     } else {
       // If no ticket with the given ID was found, render a 404 page or handle it accordingly
-      res.status(404).send('Ticket not found');
+      res.status(404).send('ISLP not found');
     }
   });
 });

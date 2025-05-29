@@ -110,7 +110,7 @@
     <h2>Update Ticket</h2>
     <div class="form-section">
       <% if (ticket) { %> 
-        <form action="/editTicket/<%= ticket.id %>" method="POST" enctype="multipart/form-data">
+        <form action="/editISLP/<%= ticket.id %>" method="POST" enctype="multipart/form-data">
           <label for="airline_name">Airline Name:</label><br>
           <input type="text" id="airline_name" name="airline_name" value="<%= ticket.airline_name %>" required><br><br>
 
