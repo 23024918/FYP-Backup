@@ -122,26 +122,6 @@
         <button class="btn btn-dark" type="submit">Search</button>
       </form>
     </div>
-
-    <!-- All Tickets from Database -->
-<% for (let i = 0; i < project.length; i++) { %>
-  <div class="dashboard-box">
-    <div class="d-flex justify-content-between align-items-center">
-      <h5><%= projects[i].project_title %> (Status ID: <%= project[i].statusid %>)</h5>
-      <div>
-        <a href="/project/<%= project[i].projectid %>" class="btn btn-sm btn-outline-dark me-2">View</a>
-        <a href="/editProject/<%= project[i].projectid %>" class="btn btn-sm btn-outline-dark me-2">Edit</a>
-        <a href="/deleteProject/<%= project[i].projectid %>" class="btn btn-sm btn-outline-danger"
-           onclick="return confirm('Are you sure you want to delete this project?');">Delete</a>
-      </div>
-    </div>
-    <small>
-      Description: <%= project[i].description %> <br>
-      Start Date: <%= new Date(project[i].project_start).toLocaleDateString('en-GB') %> |
-      End Date: <%= new Date(project[i].project_end).toLocaleDateString('en-GB') %> |
-      Status: <%= project[i].project_status %>
-    </small>
-  </div>
 <% } %>
 
 <!-- Tan Ye Kai 23024918 -->
