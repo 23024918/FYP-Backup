@@ -86,7 +86,7 @@
 
   <!-- Sidebar -->
   <div class="sidebar">
-    <a href="/">Home</a>
+    <a href="/lecturer">Home</a>
     <a href="/contact">Contact</a>
     <a href="/feedback">Feedback</a>
   </div>
@@ -98,7 +98,6 @@
       <h4 class="text-center">Project Details</h4>
       <p><b>Project Title:</b> <%= project.project_title %></p>
       <p><b>Description:</b> <%= project.description %></p>
-      <p><b>Status ID:</b> <%= project.statusid %></p>
       <p><b>Status:</b> <%= project.project_status %></p>
       <p><b>Start Date:</b> 
         <% 
@@ -120,7 +119,7 @@
       </p>
     </div>
     <div class="text-center">
-      <a href="/" class="btn btn-dark back-btn">Back to Home</a>
+      <a href="/lecturer" class="btn btn-dark back-btn">Back to Home</a>
     </div>
   <% } else { %>
     <p class="text-center mt-5">No project found.</p>

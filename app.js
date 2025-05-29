@@ -72,54 +72,47 @@ app.get('/search', (req, res) => {
   });
 });
 
-app.get('/lecturer/:id', (req, res) => {
-  // Extract the ticket ID from the request parameters
+app.get('/ISLP/:projectid', (req, res) => {
   const projectid = req.params.projectid;
-  const sql = 'SELECT * FROM project WHERE id = ?';
-  // Fetch data from MySQL based on the project ID
+  const sql = 'SELECT * FROM project WHERE projectid = ?';
+
   connection.query(sql, [projectid], (error, results) => {
     if (error) {
       console.error('Database query error:', error.message);
-      return res.status(500).send('Error Retrieving ISLP by ID');
+      return res.status(500).send('Error retrieving project by ID');
     }
-    // Check if any ISLP with the given ID was found
+
     if (results.length > 0) {
-      // Render HTML page with the ISLP data
-      res.render('pro', { project: results[0] });
+      res.render('ISLP', { project: results[0] });
     } else {
-      // If no ticket with the given ID was found, render a 404 page or handle it accordingly
-      res.status(404).send('ISLP not found');
+      res.status(404).send('Project not found');
     }
   });
 });
 
-app.get('/addTicket', (req, res) => {
-  res.render('addTicket');
+app.get('/addISLP', (req, res) => {
+  res.render('addISLP');
 });
 
-app.post('/addTicket', upload.single('airline_logo'), (req, res) => {
-  // Extract ticket data from the request body
-  let { departure_city, arrival_city, departure_date, departure_time, arrival_date, arrival_time, price, airline_name, referral_url } = req.body;
-  let airline_logo = '';
-  if (req.file) {
-    airline_logo = req.file.filename; // Save only the filename
-  } 
-  const sql = 'INSERT INTO ticket (departure_city, arrival_city, departure_date, departure_time, arrival_date, arrival_time, price, airline_name, airline_logo, referral_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-  connection.query(sql, [departure_city, arrival_city, departure_date, departure_time, arrival_date, arrival_time, price, airline_name, airline_logo, referral_url], (error, results) => {
+app.post('/addISLP', (req, res) => {
+  // Extract project data from the request body
+  const { project_title, project_head, description, project_start, project_end} = req.body;
+  const sql = 'INSERT INTO project (project_title, project_head, description, project_start, project_end) VALUES (?, ?, ?, ?, ?)';
+  connection.query(sql, [project_title, project_head, description, project_start, project_end], (error, results) => {
     if (error) {
-      console.error("Error adding ticket:", error);
-      res.status(500).send('Error adding ticket');
+      console.error("Error adding project:", error);
+      res.status(500).send('Error adding project');
     } else {
-      res.redirect('/');
+      res.redirect('/lecturer');
     }
   });
 });
 
-app.get('/editTicket/:id', (req, res) => {
-  const id = req.params.id;
-  const sql = 'SELECT * FROM ticket WHERE id = ?';
-  // Fetch data from MySQL based on the ticket ID
-  connection.query(sql, [id], (error, results) => {
+app.get('/editISLP/:projectid', (req, res) => {
+  const projectid = req.params.projectid;
+  const sql = 'SELECT * FROM project WHERE projectid = ?';
+  // Fetch data from MySQL based on the project ID
+  connection.query(sql, [projectid], (error, results) => {
     if (error) {
       console.error('Database query error:', error.message);
       return res.status(500).send('Error Retrieving ticket by ID');
@@ -127,68 +120,68 @@ app.get('/editTicket/:id', (req, res) => {
     // Check if any product with the given ID was found
     if (results.length > 0) {
       // Render HTML page with the product data
-      res.render('editTicket', { ticket: results[0] });
+      res.render('editISLP', { project: results[0] });
     } else {
       // If no product with the given ID was found, render a 404 page or handle it accordingly
-      res.status(404).send('Ticket not found');
+      res.status(404).send('ISLP not found');
     }
   });
 });
 
-app.post('/editTicket/:id', upload.single('airline_logo'), (req, res) => {
-  const id = req.params.id;
-  let { departure_city, arrival_city, departure_date, departure_time, arrival_date, arrival_time, price, airline_name, referral_url } = req.body;
-  
-  // Start with the existing data
+app.post('/editISLP/:projectid', (req, res) => {
+  const projectid = req.params.projectid;
+
+  // Destructure data from request body
+  let {
+    project_title,
+    project_head,
+    description,
+    project_start,
+    project_end
+  } = req.body;
+
+  // Build dynamic updateFields
   let updateFields = {
-    departure_city, 
-    arrival_city, 
-    departure_date, 
-    departure_time, 
-    arrival_date, 
-    arrival_time, 
-    price, 
-    airline_name, 
-    referral_url
+    project_title,
+    project_head,
+    description,
+    project_start,
+    project_end
   };
 
-  // If a new file is uploaded, add it to the updateFields
-  if (req.file) {
-    updateFields.airline_logo = req.file.filename;
-  }
-
-  // Create the SQL query dynamically based on the fields to update
+  // Prepare fields and values for the SQL query
   const fields = Object.keys(updateFields);
   const values = Object.values(updateFields);
-  
-  const sql = `UPDATE ticket SET ${fields.map(field => `${field} = ?`).join(', ')} WHERE id = ?`;
-  // const sql = `UPDATE ticket SET departure_city = ?, arrival_city = ?, departure_date = ?, departure_time = ?, arrival_date = ?, arrival_time = ?, price = ?, airline_name = ?, airline_logo = ?, referral_url = ? WHERE id = ?`;
 
+  // Dynamically generate SQL SET clause
+  const sql = `UPDATE project SET ${fields.map(field => `${field} = ?`).join(', ')} WHERE projectid = ?`;
 
-  // Add the id to the values array
-  values.push(id);
+  // Add projectid to the end of the values array
+  values.push(projectid);
 
+  // Execute the query
   connection.query(sql, values, (error, results) => {
     if (error) {
-      console.error("Error updating ticket:", error);
-      return res.status(500).send('Error updating ticket');
+      console.error("Error updating ISLP project:", error);
+      return res.status(500).send("Error updating ISLP project.");
     } else {
-      res.redirect('/');
+      res.redirect('/lecturer');
     }
   });
 });
 
-app.get('/deleteTicket/:id', (req, res) => {
-  const id = req.params.id;
-  const sql = 'DELETE FROM ticket WHERE id = ?';
-  connection.query(sql, [id], (error, results) => {
+
+app.get('/deleteISLP/:projectid', (req, res) => {
+  const projectid = req.params.projectid;
+  const sql = 'DELETE FROM project WHERE projectid = ?';
+  connection.query(sql, [projectid], (error, results) => {
     if (error) {
       // Handle any errors that occur during the database operation
       console.error('Database query error:', error.message);
-      return res.status(500).send('Error deleting ticket by ID');
+      return res.status(500).send('Error deleting project by ID');
     } else {
       // Send a success response
-      res.redirect('/');
+      res.redirect('/lecturer');
     }
   });
 });

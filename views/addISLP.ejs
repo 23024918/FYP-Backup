@@ -1,137 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Create New Project</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
   <style>
     body {
-      background-color: #f8f9fa;
-    }
-
-    .sidebar {
-      width: 120px;
-      height: 100vh;
-      background-color: #d9d9d9;
-      position: fixed;
-      top: 0;
-      left: 0;
-      padding-top: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .sidebar a {
-      width: 80px;
-      height: 80px;
-      margin: 10px 0;
-      background-color: #c4c4c4;
-      color: black;
-      text-align: center;
-      line-height: 80px;
-      text-decoration: none;
-      border-radius: 10px;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-
-    .sidebar a:hover {
-      background-color: #b0b0b0;
-    }
-
-    .sidebar a.add-active {
-      background-color: black;
-      color: white;
+      background-color: white;
+      font-family: 'Arial', sans-serif;
     }
 
     .main-content {
-      margin-left: 120px;
-      padding: 40px;
+      max-width: 700px;
+      margin: 60px auto;
+      padding: 20px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
     }
 
     .dashboard-title {
       text-align: center;
-      font-weight: bold;
-      margin-bottom: 30px;
       font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    textarea {
+      background-color: #d9d9d9;
+      border: none;
+      border-radius: 10px;
+      height: 40px;
+      padding: 10px;
+    }
+
+    textarea {
+      height: 150px;
+      resize: none;
+    }
+
+    .form-control:focus {
+      background-color: #d9d9d9;
+      box-shadow: none;
+    }
+
+    .btn-custom {
+      background-color: #d9d9d9;
+      border: none;
+      padding: 8px 20px;
+      font-weight: bold;
+      border-radius: 10px;
+      text-decoration: none;
+      color: black;
+    }
+
+    .btn-custom:hover {
+      background-color: #bfbfbf;
+    }
+
+    .add-member {
+      display: flex;
+      gap: 10px;
+    }
+
+    .date-group {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .date-group > div {
+      flex: 1;
     }
   </style>
 </head>
 <body>
 
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <a href="/">Home</a>
-    <a href="/contact">Contact</a>
-    <a href="/feedback">Feedback</a>
-  </div>
-
-  <!-- Main Content -->
   <div class="main-content">
+    <!-- Top Bar with Back and Create buttons -->
+    <div class="top-bar">
+      <a href="/lecturer" class="btn btn-custom">Back</a>
+      <button form="project-form" type="submit" class="btn btn-custom">Create</button>
+    </div>
+
     <div class="dashboard-title">Create New Project</div>
 
-    <!-- Add Ticket Form -->
-    <form action="/addISLP" method="POST" enctype="multipart/form-data">
-      <div class="mb-3">
-        <label for="airline_name" class="form-label">Airline Name:</label>
-        <input type="text" class="form-control" id="airline_name" name="airline_name" required>
+    <!-- Project Form -->
+    <form id="project-form" action="/addISLP" method="POST">
+      <div class="mb-4">
+        <label for="project_title" class="form-label">Project Name:</label>
+        <input type="text" class="form-control" id="project_title" name="project_title" required>
       </div>
 
-      <div class="mb-3">
-        <label for="departure_city" class="form-label">Departure City:</label>
-        <input type="text" class="form-control" id="departure_city" name="departure_city" required>
+      <div class="mb-4">
+        <label for="project_head" class="form-label">Project Head:</label>
+        <input type="text" class="form-control" id="project_head" name="project_head" required>
       </div>
 
-      <div class="mb-3">
-        <label for="arrival_city" class="form-label">Arrival City:</label>
-        <input type="text" class="form-control" id="arrival_city" name="arrival_city" required>
+      <div class="mb-4">
+        <label for="members" class="form-label">Add Members:</label>
+        <div class="add-member">
+          <input type="text" class="form-control" id="members" name="members">
+          <button type="button" class="btn btn-custom">Add</button>
+        </div>
       </div>
 
-      <div class="mb-3">
-        <label for="departure_date" class="form-label">Departure Date:</label>
-        <input type="date" class="form-control" id="departure_date" name="departure_date" required>
+      <div class="mb-4">
+        <label for="description" class="form-label">Add Description:</label>
+        <textarea class="form-control" id="description" name="description" required></textarea>
       </div>
 
-      <div class="mb-3">
-        <label for="departure_time" class="form-label">Departure Time:</label>
-        <input type="time" class="form-control" id="departure_time" name="departure_time" required>
+      <div class="mb-4 date-group">
+        <div>
+          <label for="project_start" class="form-label">Start Date:</label>
+          <input type="date" class="form-control" id="project_start" name="project_start" required>
+        </div>
+        <div>
+          <label for="project_end" class="form-label">End Date:</label>
+          <input type="date" class="form-control" id="project_end" name="project_end" required>
+        </div>
       </div>
-
-      <div class="mb-3">
-        <label for="arrival_date" class="form-label">Arrival Date:</label>
-        <input type="date" class="form-control" id="arrival_date" name="arrival_date" required>
-      </div>
-
-      <div class="mb-3">
-        <label for="arrival_time" class="form-label">Arrival Time:</label>
-        <input type="time" class="form-control" id="arrival_time" name="arrival_time" required>
-      </div>
-
-      <div class="mb-3">
-        <label for="referral_url" class="form-label">Referral URL:</label>
-        <input type="text" class="form-control" id="referral_url" name="referral_url" required>
-      </div>
-
-      <div class="mb-3">
-        <label for="price" class="form-label">Price:</label>
-        <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" required>
-      </div>
-
-      <div class="mb-3">
-        <label for="airline_logo" class="form-label">Airline Logo:</label>
-        <input type="file" class="form-control" id="airline_logo" name="airline_logo" accept="image/*" required>
-      </div>
-
-      <button type="submit" class="btn btn-primary">Add Ticket</button>
     </form>
   </div>
 
 </body>
 </html>
-
 
 <!--Tan Ye Kai 23024918-->
