@@ -107,50 +107,6 @@
 
   <!-- Main Content -->
   <div class="main-content">
-    <h2>Update Ticket</h2>
-    <div class="form-section">
-      <% if (ticket) { %> 
-        <form action="/editISLP/<%= ticket.id %>" method="POST" enctype="multipart/form-data">
-          <label for="airline_name">Airline Name:</label><br>
-          <input type="text" id="airline_name" name="airline_name" value="<%= ticket.airline_name %>" required><br><br>
-
-          <label for="departure_city">Departure City:</label><br>
-          <input type="text" id="departure_city" name="departure_city" value="<%= ticket.departure_city %>" required><br><br>
-
-          <label for="arrival_city">Arrival City:</label><br>
-          <input type="text" id="arrival_city" name="arrival_city" value="<%= ticket.arrival_city %>" required><br><br>
-
-          <label for="departure_date">Departure Date:</label><br>
-          <input type="date" id="departure_date" name="departure_date" value="<%= ticket.departure_date.toLocaleDateString('en-CA') %>" required><br><br>
-
-          <label for="departure_time">Departure Time:</label><br>
-          <input type="time" id="departure_time" name="departure_time" min="0" step="1" value="<%= ticket.departure_time %>" required><br><br>
-
-          <label for="arrival_date">Arrival Date:</label><br>
-          <input type="date" id="arrival_date" name="arrival_date" value="<%= ticket.arrival_date.toLocaleDateString('en-CA') %>" required><br><br>
-
-          <label for="arrival_time">Arrival Time:</label><br>
-          <input type="time" id="arrival_time" name="arrival_time" min="0" step="1" value="<%= ticket.arrival_time %>" required><br><br>
-
-          <label for="referral_url">Referral URL:</label><br>
-          <input type="text" id="referral_url" name="referral_url" value="<%= ticket.referral_url %>" required><br><br>
-
-          <label for="price">Price:</label><br>
-          <input type="number" id="price" name="price" min="0" step="0.01" value="<%= ticket.price %>" required><br><br>
-
-          <label for="airline_logo">Airline Logo:</label><br>
-          <input type="file" id="airline_logo" name="airline_logo" accept="image/*"><br>
-          <% if (ticket.airline_logo) { %>
-            <img src="/images/<%= ticket.airline_logo %>" alt="Current Logo"><br>
-            <small>Upload a new image to replace the existing one.</small>
-          <% } %>
-
-          <br>
-          <button type="submit">Update Ticket</button>
-        </form>
-      <% } else { %>
-        <p>No ticket found.</p>
-      <% } %>
       <a href="/" class="back-link">← Back</a>
     </div>
   </div>
