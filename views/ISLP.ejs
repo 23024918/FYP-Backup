@@ -102,18 +102,18 @@
       <p><b>Start Date:</b> 
         <% 
           var startDate = new Date(project.project_start);
-          var formattedStartDate = ((startDate.getMonth() + 1) + '').padStart(2, '0') + '/' + 
-                                   (startDate.getDate() + '').padStart(2, '0') + '/' + 
-                                   startDate.getFullYear();
+          var formattedStartDate = (startDate.getDate() + '').padStart(2, '0') + '/' + 
+                        ((startDate.getMonth() + 1) + '').padStart(2, '0') + '/' +                         
+                          startDate.getFullYear()
         %>
         <%= formattedStartDate %>
       </p>
       <p><b>End Date:</b> 
         <% 
           var endDate = new Date(project.project_end);
-          var formattedEndDate = ((endDate.getMonth() + 1) + '').padStart(2, '0') + '/' + 
-                                 (endDate.getDate() + '').padStart(2, '0') + '/' + 
-                                 endDate.getFullYear();
+          var formattedEndDate = (endDate.getDate() + '').padStart(2, '0') + '/' + 
+                                    ((endDate.getMonth() + 1) + '').padStart(2, '0') + '/' +                         
+                                    endDate.getFullYear()
         %>
         <%= formattedEndDate %>
       </p>
