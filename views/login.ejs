@@ -122,28 +122,6 @@
         <button class="btn btn-dark" type="submit">Search</button>
       </form>
     </div>
-
-    <!-- All Tickets from Database -->
-    <% for (let i = 0; i < ticket.length; i++) { %>
-      <div class="dashboard-box">
-        <div class="d-flex justify-content-between align-items-center">
-          <h5><%= ticket[i].airline_name %> (<%= ticket[i].departure_city %> ➔ <%= ticket[i].arrival_city %>)</h5>
-          <div>
-            <a href="/ticket/<%= ticket[i].id %>" class="btn btn-sm btn-outline-dark me-2">View</a>
-            <a href="/editTicket/<%= ticket[i].id %>" class="btn btn-sm btn-outline-dark me-2">Edit</a>
-            <a href="/deleteTicket/<%= ticket[i].id %>" class="btn btn-sm btn-outline-danger"
-               onclick="return confirm('Are you sure you want to delete this ISLP?');">Delete</a>
-          </div>
-        </div>
-        <small>
-          Departure: 
-          <%= new Date(ticket[i].departure_date).toLocaleDateString('en-GB') %> @ <%= ticket[i].departure_time %> | 
-          Arrival: 
-          <%= new Date(ticket[i].arrival_date).toLocaleDateString('en-GB') %> @ <%= ticket[i].arrival_time %> |
-          Price: $<%= ticket[i].price %> |
-          <a href="<%= ticket[i].referral_url %>" target="_blank">Ticket Website</a>
-        </small>
-      </div>
     <% } %>
   </div>
 </body>

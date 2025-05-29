@@ -90,31 +90,7 @@
   <div class="main-content">
     <h2 class="dashboard-title">Search Results for "<%= query %>"</h2>
 
-    <% if (results.length > 0) { %>
-      <% results.forEach(ticket => { %>
-        <div class="dashboard-box">
-          <div class="d-flex justify-content-between align-items-center">
-            <h5><%= ticket.airline_name %> (<%= ticket.departure_city %> ➔ <%= ticket.arrival_city %>)</h5>
-            <div>
-              <a href="/ticket/<%= ticket.id %>" class="btn btn-sm btn-outline-dark me-2">View</a>
-              <a href="/editTicket/<%= ticket.id %>" class="btn btn-sm btn-outline-dark me-2">Edit</a>
-              <a href="/deleteTicket/<%= ticket.id %>" class="btn btn-sm btn-outline-danger"
-                 onclick="return confirm('Are you sure you want to delete this ticket?');">Delete</a>
-            </div>
-          </div>
-          <small>
-            Departure: 
-            <%= new Date(ticket.departure_date).toLocaleDateString('en-GB') %> @ <%= ticket.departure_time %> | 
-            Arrival: 
-            <%= new Date(ticket.arrival_date).toLocaleDateString('en-GB') %> @ <%= ticket.arrival_time %> |
-            Price: $<%= ticket.price %> |
-            <a href="<%= ticket.referral_url %>" target="_blank">Website</a>
-          </small>
-        </div>
-      <% }); %>
-    <% } else { %>
-      <p class="alert alert-info">No results found for "<%= query %>". Please try a different search term.</p>
-    <% } %>
+  
 <div style="width: 80%; margin: 0 auto;">
   <a href="/" class="btn btn-primary mt-3">Back to Home</a>
 </div>
