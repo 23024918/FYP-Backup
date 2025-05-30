@@ -187,7 +187,7 @@ app.get('/deleteISLP/:projectid', (req, res) => {
 });
 
 app.get('/contact', (req, res) => {
-  res.render('contact');
+  res.render('contac');
 });
 
 app.post('/submit', (req, res) => {
@@ -207,7 +207,7 @@ app.post('/submit', (req, res) => {
 app.get('/feedback', (req, res) => { 
   connection.query('SELECT * FROM feedback', (error, results) => { 
     if (error) throw error; 
-    res.render('feedback', { feedback: results }); // Render HTML page with data 
+    res.render('feedbac', { feedback: results }); // Render HTML page with data 
   }); 
 }); 
 
