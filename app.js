@@ -151,11 +151,11 @@ app.get('/ISLP/:projectid', checkAuthenticated, (req, res) => {
   });
 });
 
-app.get('/addISLP', checkAuthenticated, checkRole(1), (req, res) => {
+app.get('/addISLP', checkAuthenticated, checkRole(1,2), (req, res) => {
   res.render('addISLP');
 });
 
-app.post('/addISLP', checkAuthenticated, checkRole(1), (req, res) => {
+app.post('/addISLP', checkAuthenticated, checkRole(1,2), (req, res) => {
   const { project_title, project_head, description, project_start, project_end } = req.body;
   const sql = 'INSERT INTO project (project_title, project_head, description, project_start, project_end) VALUES (?, ?, ?, ?, ?)';
   connection.query(sql, [project_title, project_head, description, project_start, project_end], (error, results) => {
@@ -164,7 +164,7 @@ app.post('/addISLP', checkAuthenticated, checkRole(1), (req, res) => {
   });
 });
 
-app.get('/editISLP/:projectid', checkAuthenticated, checkRole(1), (req, res) => {
+app.get('/editISLP/:projectid', checkAuthenticated, checkRole(1,2), (req, res) => {
   const projectid = req.params.projectid;
   const sql = 'SELECT * FROM project WHERE projectid = ?';
   connection.query(sql, [projectid], (error, results) => {
@@ -177,7 +177,7 @@ app.get('/editISLP/:projectid', checkAuthenticated, checkRole(1), (req, res) => 
   });
 });
 
-app.post('/editISLP/:projectid', checkAuthenticated, checkRole(1), (req, res) => {
+app.post('/editISLP/:projectid', checkAuthenticated, checkRole(1,2), (req, res) => {
   const projectid = req.params.projectid;
   const { project_title, project_head, description, project_start, project_end } = req.body;
 
@@ -194,7 +194,7 @@ app.post('/editISLP/:projectid', checkAuthenticated, checkRole(1), (req, res) =>
   });
 });
 
-app.get('/deleteISLP/:projectid', checkAuthenticated, checkRole(1), (req, res) => {
+app.get('/deleteISLP/:projectid', checkAuthenticated, checkRole(1,2), (req, res) => {
   const projectid = req.params.projectid;
   const sql = 'DELETE FROM project WHERE projectid = ?';
   connection.query(sql, [projectid], (error, results) => {
