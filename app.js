@@ -20,7 +20,7 @@ const connection = mysql.createConnection({
   host: 'localhost', 
   user: 'root', 
   password: '', 
-  database: 'erdforfyp' 
+  database: 'fyp' 
 });
  
 connection.connect((err) => { 
