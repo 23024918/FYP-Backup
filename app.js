@@ -53,10 +53,10 @@ const checkAuthenticated = (req, res, next) => {
   res.redirect('/login');
 };
 
-const checkRole = (requiredRoleId) => {
+const checkRole = (...allowedRoles) => {
   return (req, res, next) => {
-    if (req.session.user && req.session.user.roleid === requiredRoleId) {
-      next();
+    if (req.session.user && allowedRoles.includes(req.session.user.roleid)) {
+      return next();
     } else {
       req.flash('error', 'Access denied.');
       res.redirect('/login');
@@ -91,16 +91,16 @@ app.post('/login', (req, res) => {
       req.session.user = results[0];
       req.flash('success', 'Login successful!');
 
-      // 🔁 REDIRECT BASED ON ROLEID
+      // Redirect based on roleid
       if (results[0].roleid === 1) {
         return res.redirect('/admin');
-    } else if (results[0].roleid === 2) {
+      } else if (results[0].roleid === 2) {
         return res.redirect('/lecturer');
-    } else if (results[0].roleid === 3) {
+      } else if (results[0].roleid === 3) {
         return res.redirect('/student');
-    } else {
-        return res.redirect('/'); // fallback
-    }
+      } else {
+        return res.redirect('/');
+      }
     } else {
       req.flash('error', 'Invalid email or password.');
       res.redirect('/login');
@@ -122,11 +122,11 @@ app.get('/lecturer', checkAuthenticated, checkRole(2), (req, res) => {
 });
 
 app.get('/student', checkAuthenticated, checkRole(3), (req, res) => {
-  res.render('studentDashboard'); // You must create this view
+  res.render('studentDashboard');
 });
 
 app.get('/admin', checkAuthenticated, checkRole(1), (req, res) => {
-  res.render('adminPanel'); // You must create this view
+  res.render('adminPanel');
 });
 
 app.get('/search', checkAuthenticated, (req, res) => {
@@ -151,11 +151,11 @@ app.get('/ISLP/:projectid', checkAuthenticated, (req, res) => {
   });
 });
 
-app.get('/addISLP', checkAuthenticated, checkRole(1,2), (req, res) => {
+app.get('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {
   res.render('addISLP');
 });
 
-app.post('/addISLP', checkAuthenticated, checkRole(1,2), (req, res) => {
+app.post('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {                         
   const { project_title, project_head, description, project_start, project_end } = req.body;
   const sql = 'INSERT INTO project (project_title, project_head, description, project_start, project_end) VALUES (?, ?, ?, ?, ?)';
   connection.query(sql, [project_title, project_head, description, project_start, project_end], (error, results) => {
@@ -164,7 +164,7 @@ app.post('/addISLP', checkAuthenticated, checkRole(1,2), (req, res) => {
   });
 });
 
-app.get('/editISLP/:projectid', checkAuthenticated, checkRole(1,2), (req, res) => {
+app.get('/editISLP/:projectid', checkAuthenticated, checkRole(1, 2), (req, res) => {
   const projectid = req.params.projectid;
   const sql = 'SELECT * FROM project WHERE projectid = ?';
   connection.query(sql, [projectid], (error, results) => {
@@ -177,7 +177,7 @@ app.get('/editISLP/:projectid', checkAuthenticated, checkRole(1,2), (req, res) =
   });
 });
 
-app.post('/editISLP/:projectid', checkAuthenticated, checkRole(1,2), (req, res) => {
+app.post('/editISLP/:projectid', checkAuthenticated, checkRole(1, 2), (req, res) => {
   const projectid = req.params.projectid;
   const { project_title, project_head, description, project_start, project_end } = req.body;
 
@@ -194,7 +194,7 @@ app.post('/editISLP/:projectid', checkAuthenticated, checkRole(1,2), (req, res) 
   });
 });
 
-app.get('/deleteISLP/:projectid', checkAuthenticated, checkRole(1,2), (req, res) => {
+app.get('/deleteISLP/:projectid', checkAuthenticated, checkRole(1, 2), (req, res) => {
   const projectid = req.params.projectid;
   const sql = 'DELETE FROM project WHERE projectid = ?';
   connection.query(sql, [projectid], (error, results) => {
