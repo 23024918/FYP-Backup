@@ -115,7 +115,12 @@ app.get('/logout', (req, res) => {
 });
 
 app.get('/lecturer', checkAuthenticated, checkRole(2), (req, res) => { 
-  connection.query('SELECT * FROM project', (error, results) => { 
+  const sql = `
+    SELECT p.*, s.name as project_status 
+    FROM project p 
+    LEFT JOIN status s ON p.status_statusid = s.statusid
+  `;
+  connection.query(sql, (error, results) => { 
     if (error) throw error; 
     res.render('lecturer', { project: results }); 
   }); 
@@ -139,7 +144,12 @@ app.get('/search', checkAuthenticated, (req, res) => {
 
 app.get('/ISLP/:projectid', checkAuthenticated, (req, res) => {
   const projectid = req.params.projectid;
-  const sql = 'SELECT * FROM project WHERE projectid = ?';
+  const sql = `
+    SELECT p.*, s.name as project_status 
+    FROM project p 
+    LEFT JOIN status s ON p.status_statusid = s.statusid 
+    WHERE p.projectid = ?
+  `;
 
   connection.query(sql, [projectid], (error, results) => {
     if (error) return res.status(500).send('Error retrieving project by ID');
@@ -157,10 +167,57 @@ app.get('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {
 
 app.post('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {                         
   const { project_title, project_head, description, project_start, project_end } = req.body;
-  const sql = 'INSERT INTO project (project_title, project_head, description, project_start, project_end) VALUES (?, ?, ?, ?, ?)';
-  connection.query(sql, [project_title, project_head, description, project_start, project_end], (error, results) => {
-    if (error) return res.status(500).send('Error adding project');
-    res.redirect('/lecturer');
+  
+  // First, check if "Pending" status exists
+  connection.query('SELECT statusid FROM status WHERE name = ?', ['Pending'], (statusError, statusResults) => {
+    if (statusError) {
+      console.error('Error checking for Pending status:', statusError);
+      return res.status(500).send('Error checking status: ' + statusError.message);
+    }
+    
+    let pendingStatusId;
+    
+    if (statusResults.length === 0) {
+      // "Pending" status doesn't exist, create it
+      console.log('Pending status not found, creating it...');
+      connection.query('INSERT INTO status (name, description) VALUES (?, ?)', 
+        ['Pending', 'Project is awaiting review or approval'], 
+        (insertError, insertResults) => {
+          if (insertError) {
+            console.error('Error creating Pending status:', insertError);
+            return res.status(500).send('Error creating status: ' + insertError.message);
+          }
+          
+          pendingStatusId = insertResults.insertId;
+          console.log('Created Pending status with ID:', pendingStatusId);
+          
+          // Insert project with the new Pending status
+          const sql = 'INSERT INTO project (project_title, project_head, description, project_start, project_end, status_statusid) VALUES (?, ?, ?, ?, ?, ?)';
+          connection.query(sql, [project_title, project_head, description, project_start, project_end, pendingStatusId], (error, results) => {
+            if (error) {
+              console.error('Error adding project:', error);
+              return res.status(500).send('Error adding project: ' + error.message);
+            }
+            console.log('Project added successfully with Pending status');
+            res.redirect('/lecturer');
+          });
+        }
+      );
+    } else {
+      // Use existing "Pending" status
+      pendingStatusId = statusResults[0].statusid;
+      console.log('Using existing Pending status ID:', pendingStatusId);
+      
+      const sql = 'INSERT INTO project (project_title, project_head, description, project_start, project_end, status_statusid) VALUES (?, ?, ?, ?, ?, ?)';
+      connection.query(sql, [project_title, project_head, description, project_start, project_end, pendingStatusId], (error, results) => {
+        if (error) {
+          console.error('Error adding project:', error);
+          return res.status(500).send('Error adding project: ' + error.message);
+        }
+        console.log('Project added successfully with existing Pending status');
+        res.redirect('/lecturer');
+      });
+    }
   });
 });
 
