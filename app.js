@@ -144,22 +144,34 @@ app.get('/search', checkAuthenticated, (req, res) => {
 
 app.get('/ISLP/:projectid', checkAuthenticated, (req, res) => {
   const projectid = req.params.projectid;
-  const sql = `
+
+  const projectSql = `
     SELECT p.*, s.name as project_status 
     FROM project p 
     LEFT JOIN status s ON p.status_statusid = s.statusid 
     WHERE p.projectid = ?
   `;
 
-  connection.query(sql, [projectid], (error, results) => {
-    if (error) return res.status(500).send('Error retrieving project by ID');
-    if (results.length > 0) {
-      res.render('ISLP', { project: results[0] });
-    } else {
-      res.status(404).send('Project not found');
-    }
+  const postSql = `
+    SELECT sub.*, acc.username 
+    FROM submissions sub 
+    JOIN account acc ON sub.accountid = acc.accountid 
+    WHERE sub.projectid = ? 
+    ORDER BY sub.submission_date DESC
+  `;
+
+  connection.query(projectSql, [projectid], (err, projectResults) => {
+    if (err || projectResults.length === 0) return res.status(500).send('Project not found');
+
+    connection.query(postSql, [projectid], (err, postResults) => {
+      if (err) return res.status(500).send('Error loading posts');
+      res.render('ISLP', { project: projectResults[0], posts: postResults, user: req.session.user });
+
+    });
   });
 });
+
+
 
 app.get('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {
   res.render('addISLP');
@@ -279,6 +291,80 @@ app.get('/feedback', checkAuthenticated, checkRole(1), (req, res) => {
     res.render('feedbac', { feedback: results });
   });
 });
+
+app.get('/addPost/:projectid', checkAuthenticated, checkRole(2), (req, res) => {
+  const { projectid } = req.params;
+  connection.query('SELECT * FROM project WHERE projectid = ?', [projectid], (err, results) => {
+    if (err || results.length === 0) return res.status(404).send('Project not found');
+    res.render('addPost', { project: results[0] });
+  });
+});
+
+app.post('/addPost/:projectid', checkAuthenticated, checkRole(2), (req, res) => {
+  const { projectid } = req.params;
+  const { description } = req.body;
+  const accountid = req.session.user.accountid;
+
+  const sql = `
+    INSERT INTO submissions (accountid, projectid, description, submission_date)
+    VALUES (?, ?, ?, NOW())
+  `;
+
+  connection.query(sql, [accountid, projectid, description], (err, result) => {
+    if (err) {
+      console.error('Error inserting submission:', err);
+      return res.status(500).send('Failed to add submission');
+    }
+    res.redirect(`/ISLP/${projectid}`);
+  });
+});
+
+app.get('/editPost/:submissionsid', checkAuthenticated, checkRole(2), (req, res) => {
+  const { submissionsid } = req.params;
+  const sql = 'SELECT submissionsid, projectid, description FROM submissions WHERE submissionsid = ?';
+
+  connection.query(sql, [submissionsid], (err, results) => {
+    if (err || results.length === 0) return res.status(404).send('Post not found');
+    res.render('editPost', { post: results[0] });
+  });
+});
+
+
+app.post('/editPost/:submissionsid', checkAuthenticated, checkRole(2), (req, res) => {
+  const { submissionsid } = req.params;
+  const { description } = req.body;
+
+  const sql = 'UPDATE submissions SET description = ? WHERE submissionsid = ?';
+  connection.query(sql, [description, submissionsid], (err, result) => {
+    if (err) return res.status(500).send('Failed to update post');
+
+    // Redirect back to project page
+    const getProjectSql = 'SELECT projectid FROM submissions WHERE submissionsid = ?';
+    connection.query(getProjectSql, [submissionsid], (err2, projectResult) => {
+      if (err2 || projectResult.length === 0) return res.status(500).send('Could not redirect');
+      res.redirect(`/ISLP/${projectResult[0].projectid}`);
+    });
+  });
+});
+
+app.get('/deletePost/:submissionsid', checkAuthenticated, checkRole(2), (req, res) => {
+  const { submissionsid } = req.params;
+
+  // Get projectid first for redirection
+  const getProjectSql = 'SELECT projectid FROM submissions WHERE submissionsid = ?';
+  connection.query(getProjectSql, [submissionsid], (err, results) => {
+    if (err || results.length === 0) return res.status(404).send('Post not found');
+    const projectid = results[0].projectid;
+
+    const deleteSql = 'DELETE FROM submissions WHERE submissionsid = ?';
+    connection.query(deleteSql, [submissionsid], (deleteErr) => {
+      if (deleteErr) return res.status(500).send('Failed to delete post');
+      res.redirect(`/ISLP/${projectid}`);
+    });
+  });
+});
+
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}/login`));
