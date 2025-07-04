@@ -109,7 +109,7 @@
     <div class="header">
       <a href="/lecturer" class="back-link">< All Projects</a>
       <div class="header-buttons">
-        <a href="#" class="btn-custom">Add Post</a>
+        <a href="/addPost/<%= project.projectid %>" class="btn-custom">Add Post</a>
         <a href="#" class="btn-custom">Sign up</a>
       </div>
     </div>
@@ -179,8 +179,23 @@
           <a href="#" class="btn-custom">Delete</a>
         </div>
         <div class="posts-content">
-          <!-- Posts content will go here -->
-          <p>No posts available yet.</p>
+          <% if (posts && posts.length > 0) { %>
+            <% posts.forEach(post => { %>
+              <div class="mb-3 p-3 bg-white rounded shadow-sm">
+                <p><%= post.description %></p>
+                <small class="text-muted">By <%= post.username %> on <%= new Date(post.submission_date).toLocaleString() %></small>
+                
+                <% if (user && user.roleid === 2 && user.accountid === post.accountid) { %>
+                  <div class="mt-2">
+                    <a href="/editPost/<%= post.submissionsid %>" class="btn btn-sm btn-warning">Edit</a>
+                    <a href="/deletePost/<%= post.submissionsid %>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this post?')">Delete</a>
+                  </div>
+                <% } %>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <p>No posts available yet.</p>
+          <% } %>
         </div>
       </div>
 
