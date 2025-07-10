@@ -88,12 +88,7 @@
       top: 20px;
       right: 20px;
       display: flex;
-      gap: 10px;
-    }
-
-    .posts-buttons .btn-custom {
-      padding: 8px 15px;
-      font-size: 0.8rem;
+      gap: 5px;
     }
 
     .posts-content {
@@ -177,7 +172,7 @@
         <% if (members && members.length > 0) { %>
           <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
             <% members.forEach(function(member) { %>
-              <div style="background-color: #007bff; color: white; padding: 8px 15px; border-radius: 20px; font-size: 0.9rem;">
+              <div style="background-color: black; color: white; padding: 8px 15px; border-radius: 20px; font-size: 0.9rem;">
                 <%= member.username %> 
                 <small>(<%= member.roleid === 2 ? 'Lecturer' : 'Student' %>)</small>
               </div>
@@ -192,8 +187,8 @@
       <div class="content-box posts-section">
         <h5>Posts:</h5>
         <div class="posts-buttons">
-          <a href="#" class="btn-custom">Edit</a>
-          <a href="#" class="btn-custom">Delete</a>
+          <a href="#" class="btn btn-sm btn-outline-dark me-2">Edit</a>
+          <a href="#" class="btn btn-sm btn-outline-danger">Delete</a>
         </div>
         <div class="posts-content">
           <% if (posts && posts.length > 0) { %>

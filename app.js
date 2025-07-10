@@ -433,6 +433,60 @@ app.get('/contact', (req, res) => {
   res.render('contac');
 });
 
+app.get('/profile', checkAuthenticated, (req, res) => {
+  res.render('profile', { user: req.session.user });
+});
+
+app.post('/updateProfile', checkAuthenticated, (req, res) => {
+  const { username, email, phone, password } = req.body;
+  const accountid = req.session.user.accountid;
+
+  // Build update query dynamically based on provided fields
+  let updateFields = [];
+  let values = [];
+
+  if (username) {
+    updateFields.push('username = ?');
+    values.push(username);
+  }
+  if (email) {
+    updateFields.push('email = ?');
+    values.push(email);
+  }
+  if (phone) {
+    updateFields.push('phone = ?');
+    values.push(phone);
+  }
+  if (password && password.trim() !== '') {
+    updateFields.push('password = ?');
+    values.push(password);
+  }
+
+  if (updateFields.length === 0) {
+    return res.redirect('/profile');
+  }
+
+  values.push(accountid);
+  const sql = `UPDATE account SET ${updateFields.join(', ')} WHERE accountid = ?`;
+
+  connection.query(sql, values, (error, results) => {
+    if (error) {
+      console.error('Error updating profile:', error);
+      return res.status(500).send('Error updating profile');
+    }
+
+    // Update session data
+    connection.query('SELECT * FROM account WHERE accountid = ?', [accountid], (selectError, selectResults) => {
+      if (selectError) {
+        console.error('Error fetching updated user data:', selectError);
+      } else if (selectResults.length > 0) {
+        req.session.user = selectResults[0];
+      }
+      res.redirect('/profile');
+    });
+  });
+});
+
 app.post('/submit', (req, res) => {
   const { name, email, contact_no, comments } = req.body;
   const sql = 'INSERT INTO feedback (name, email, contact_no, comments) VALUES (?, ?, ?, ?)';
