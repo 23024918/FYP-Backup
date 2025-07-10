@@ -95,6 +95,11 @@
       margin-top: 50px;
       min-height: 150px;
     }
+
+    .post-item {
+      background-color: #d9d9d9 !important;
+      border: none;
+    }
   </style>
 </head>
 <body>
@@ -193,14 +198,14 @@
         <div class="posts-content">
           <% if (posts && posts.length > 0) { %>
             <% posts.forEach(post => { %>
-              <div class="mb-3 p-3 bg-white rounded shadow-sm">
+              <div class="mb-3 p-3 rounded shadow-sm post-item">
                 <p><%= post.description %></p>
                 <small class="text-muted">By <%= post.username %> on <%= new Date(post.submission_date).toLocaleString() %></small>
                 
                 <% if (user && user.roleid === 2 && user.accountid === post.accountid) { %>
                   <div class="mt-2">
-                    <a href="/editPost/<%= post.submissionsid %>" class="btn btn-sm btn-warning">Edit</a>
-                    <a href="/deletePost/<%= post.submissionsid %>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this post?')">Delete</a>
+                    <a href="/editPost/<%= post.submissionsid %>" class="btn btn-sm btn-outline-dark me-2">Edit</a>
+                    <a href="/deletePost/<%= post.submissionsid %>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this post?')">Delete</a>
                   </div>
                 <% } %>
               </div>
