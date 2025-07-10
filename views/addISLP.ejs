@@ -83,6 +83,58 @@
     .date-group > div {
       flex: 1;
     }
+
+    .member-dropdown {
+      background-color: #d9d9d9;
+      border: none;
+      border-radius: 10px;
+      height: 40px;
+      padding: 10px;
+      width: 100%;
+    }
+
+    .member-dropdown:focus {
+      background-color: #d9d9d9;
+      box-shadow: none;
+    }
+
+    .added-members {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 10px;
+      min-height: 100px;
+    }
+
+    .member-tag {
+      display: inline-block;
+      background-color: #007bff;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 15px;
+      margin: 2px;
+      font-size: 0.85rem;
+    }
+
+    .member-tag .remove-btn {
+      background: none;
+      border: none;
+      color: white;
+      margin-left: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .member-tag .remove-btn:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+    }
+
+    .no-members {
+      color: #6c757d;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -111,9 +163,22 @@
       <div class="mb-4">
         <label for="members" class="form-label">Add Members:</label>
         <div class="add-member">
-          <input type="text" class="form-control" id="members" name="members">
-          <button type="button" class="btn btn-custom">Add</button>
+          <select class="member-dropdown" id="userDropdown">
+            <option value="">Select a user to add...</option>
+            <% if (users && users.length > 0) { %>
+              <% users.forEach(function(user) { %>
+                <option value="<%= user.accountid %>" data-username="<%= user.username %>" data-email="<%= user.email %>" data-role="<%= user.roleid %>">
+                  <%= user.username %> (<%= user.email %>) - <%= user.roleid === 2 ? 'Lecturer' : 'Student' %>
+                </option>
+              <% }); %>
+            <% } %>
+          </select>
+          <button type="button" class="btn btn-custom" onclick="addMember()">Add</button>
         </div>
+        <div class="added-members" id="membersContainer">
+          <div class="no-members" id="noMembersText">No members added yet.</div>
+        </div>
+        <input type="hidden" id="selectedMembers" name="members" value="">
       </div>
 
       <div class="mb-4">
@@ -133,6 +198,83 @@
       </div>
     </form>
   </div>
+
+  <script>
+    let selectedMembers = [];
+
+    function addMember() {
+      const dropdown = document.getElementById('userDropdown');
+      const selectedOption = dropdown.options[dropdown.selectedIndex];
+      
+      if (selectedOption.value === '') {
+        alert('Please select a user to add.');
+        return;
+      }
+
+      const userId = selectedOption.value;
+      const username = selectedOption.getAttribute('data-username');
+      const email = selectedOption.getAttribute('data-email');
+      const role = selectedOption.getAttribute('data-role');
+      const roleText = role === '2' ? 'Lecturer' : 'Student';
+
+      // Check if user is already added
+      if (selectedMembers.some(member => member.id === userId)) {
+        alert('This user is already added to the project.');
+        return;
+      }
+
+      // Add to selected members array
+      selectedMembers.push({
+        id: userId,
+        username: username,
+        email: email,
+        role: role,
+        roleText: roleText
+      });
+
+      // Update the display
+      updateMembersDisplay();
+      
+      // Reset dropdown
+      dropdown.selectedIndex = 0;
+      
+      // Update hidden input
+      updateHiddenInput();
+    }
+
+    function removeMember(userId) {
+      selectedMembers = selectedMembers.filter(member => member.id !== userId);
+      updateMembersDisplay();
+      updateHiddenInput();
+    }
+
+    function updateMembersDisplay() {
+      const container = document.getElementById('membersContainer');
+      const noMembersText = document.getElementById('noMembersText');
+      
+      if (selectedMembers.length === 0) {
+        container.innerHTML = '<div class="no-members" id="noMembersText">No members added yet.</div>';
+        return;
+      }
+
+      let html = '';
+      selectedMembers.forEach(member => {
+        html += `
+          <div class="member-tag">
+            ${member.username} (${member.roleText})
+            <button type="button" class="remove-btn" onclick="removeMember('${member.id}')" title="Remove member">×</button>
+          </div>
+        `;
+      });
+      
+      container.innerHTML = html;
+    }
+
+    function updateHiddenInput() {
+      const hiddenInput = document.getElementById('selectedMembers');
+      hiddenInput.value = JSON.stringify(selectedMembers);
+    }
+  </script>
 
 </body>
 </html>

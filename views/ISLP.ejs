@@ -137,7 +137,7 @@
         <p><%= project.description || 'No description available' %></p>
       </div>
 
-      <!-- Ticket Details Section -->
+      <!-- Project Details Section -->
       <div class="content-box">
         <h5>Project Details:</h5>
         <p><strong>Start Date:</strong> 
@@ -168,6 +168,23 @@
         </p>
         <% if (project.project_status) { %>
           <p><strong>Status:</strong> <%= project.project_status %></p>
+        <% } %>
+      </div>
+
+      <!-- Members Section -->
+      <div class="content-box">
+        <h5>Project Members:</h5>
+        <% if (members && members.length > 0) { %>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+            <% members.forEach(function(member) { %>
+              <div style="background-color: #007bff; color: white; padding: 8px 15px; border-radius: 20px; font-size: 0.9rem;">
+                <%= member.username %> 
+                <small>(<%= member.roleid === 2 ? 'Lecturer' : 'Student' %>)</small>
+              </div>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <p>No members assigned to this project.</p>
         <% } %>
       </div>
 

@@ -160,13 +160,33 @@ app.get('/ISLP/:projectid', checkAuthenticated, (req, res) => {
     ORDER BY sub.submission_date DESC
   `;
 
+  const membersSql = `
+    SELECT pm.*, acc.username, acc.email, acc.roleid
+    FROM project_members pm
+    JOIN account acc ON pm.accountid = acc.accountid
+    WHERE pm.projectid = ?
+    ORDER BY acc.username
+  `;
+
   connection.query(projectSql, [projectid], (err, projectResults) => {
     if (err || projectResults.length === 0) return res.status(500).send('Project not found');
 
     connection.query(postSql, [projectid], (err, postResults) => {
       if (err) return res.status(500).send('Error loading posts');
-      res.render('ISLP', { project: projectResults[0], posts: postResults, user: req.session.user });
-
+      
+      connection.query(membersSql, [projectid], (err, memberResults) => {
+        if (err) {
+          console.error('Error loading members:', err);
+          memberResults = []; // Continue without members if there's an error
+        }
+        
+        res.render('ISLP', { 
+          project: projectResults[0], 
+          posts: postResults, 
+          members: memberResults,
+          user: req.session.user 
+        });
+      });
     });
   });
 });
@@ -174,11 +194,30 @@ app.get('/ISLP/:projectid', checkAuthenticated, (req, res) => {
 
 
 app.get('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {
-  res.render('addISLP');
+  // Get users with role ID 2 (lecturers) or 3 (students)
+  const sql = 'SELECT accountid, username, email, roleid FROM account WHERE roleid IN (2, 3)';
+  connection.query(sql, (error, results) => {
+    if (error) {
+      console.error('Error fetching users:', error);
+      return res.status(500).send('Error fetching users');
+    }
+    res.render('addISLP', { users: results });
+  });
 });
 
 app.post('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {                         
-  const { project_title, project_head, description, project_start, project_end } = req.body;
+  const { project_title, project_head, description, project_start, project_end, members } = req.body;
+  
+  // Parse members JSON string
+  let membersList = [];
+  if (members && members.trim() !== '') {
+    try {
+      membersList = JSON.parse(members);
+    } catch (error) {
+      console.error('Error parsing members:', error);
+      return res.status(400).send('Invalid members data');
+    }
+  }
   
   // First, check if "Pending" status exists
   connection.query('SELECT statusid FROM status WHERE name = ?', ['Pending'], (statusError, statusResults) => {
@@ -204,15 +243,7 @@ app.post('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {
           console.log('Created Pending status with ID:', pendingStatusId);
           
           // Insert project with the new Pending status
-          const sql = 'INSERT INTO project (project_title, project_head, description, project_start, project_end, status_statusid) VALUES (?, ?, ?, ?, ?, ?)';
-          connection.query(sql, [project_title, project_head, description, project_start, project_end, pendingStatusId], (error, results) => {
-            if (error) {
-              console.error('Error adding project:', error);
-              return res.status(500).send('Error adding project: ' + error.message);
-            }
-            console.log('Project added successfully with Pending status');
-            res.redirect('/lecturer');
-          });
+          insertProjectWithMembers(project_title, project_head, description, project_start, project_end, pendingStatusId, membersList, res);
         }
       );
     } else {
@@ -220,35 +251,127 @@ app.post('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {
       pendingStatusId = statusResults[0].statusid;
       console.log('Using existing Pending status ID:', pendingStatusId);
       
-      const sql = 'INSERT INTO project (project_title, project_head, description, project_start, project_end, status_statusid) VALUES (?, ?, ?, ?, ?, ?)';
-      connection.query(sql, [project_title, project_head, description, project_start, project_end, pendingStatusId], (error, results) => {
-        if (error) {
-          console.error('Error adding project:', error);
-          return res.status(500).send('Error adding project: ' + error.message);
-        }
-        console.log('Project added successfully with existing Pending status');
-        res.redirect('/lecturer');
-      });
+      // Insert project with existing Pending status
+      insertProjectWithMembers(project_title, project_head, description, project_start, project_end, pendingStatusId, membersList, res);
     }
   });
 });
 
+// Helper function to insert project and members
+function insertProjectWithMembers(project_title, project_head, description, project_start, project_end, statusId, membersList, res) {
+  const sql = 'INSERT INTO project (project_title, project_head, description, project_start, project_end, status_statusid) VALUES (?, ?, ?, ?, ?, ?)';
+  connection.query(sql, [project_title, project_head, description, project_start, project_end, statusId], (error, results) => {
+    if (error) {
+      console.error('Error adding project:', error);
+      return res.status(500).send('Error adding project: ' + error.message);
+    }
+    
+    const projectId = results.insertId;
+    console.log('Project added successfully with ID:', projectId);
+    
+    // Insert members if any
+    if (membersList && membersList.length > 0) {
+      insertProjectMembers(projectId, membersList, res);
+    } else {
+      console.log('No members to add');
+      res.redirect('/lecturer');
+    }
+  });
+}
+
+// Helper function to insert project members
+function insertProjectMembers(projectId, membersList, res) {
+  // Create project_members table if it doesn't exist
+  const createTableSql = `
+    CREATE TABLE IF NOT EXISTS project_members (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      projectid INT NOT NULL,
+      accountid INT NOT NULL,
+      added_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (projectid) REFERENCES project(projectid) ON DELETE CASCADE,
+      FOREIGN KEY (accountid) REFERENCES account(accountid) ON DELETE CASCADE,
+      UNIQUE KEY unique_project_member (projectid, accountid)
+    )
+  `;
+  
+  connection.query(createTableSql, (createError) => {
+    if (createError) {
+      console.error('Error creating project_members table:', createError);
+      return res.status(500).send('Error creating members table: ' + createError.message);
+    }
+    
+    // Insert members
+    const memberValues = membersList.map(member => [projectId, member.id]);
+    const insertMembersSql = 'INSERT INTO project_members (projectid, accountid) VALUES ?';
+    
+    connection.query(insertMembersSql, [memberValues], (membersError) => {
+      if (membersError) {
+        console.error('Error adding project members:', membersError);
+        return res.status(500).send('Error adding members: ' + membersError.message);
+      }
+      
+      console.log('Project members added successfully');
+      res.redirect('/lecturer');
+    });
+  });
+}
+
 app.get('/editISLP/:projectid', checkAuthenticated, checkRole(1, 2), (req, res) => {
   const projectid = req.params.projectid;
-  const sql = 'SELECT * FROM project WHERE projectid = ?';
-  connection.query(sql, [projectid], (error, results) => {
+  const projectSql = 'SELECT * FROM project WHERE projectid = ?';
+  
+  connection.query(projectSql, [projectid], (error, projectResults) => {
     if (error) return res.status(500).send('Error retrieving project by ID');
-    if (results.length > 0) {
-      res.render('editISLP', { project: results[0] });
-    } else {
-      res.status(404).send('ISLP not found');
-    }
+    if (projectResults.length === 0) return res.status(404).send('ISLP not found');
+    
+    // Get users with role ID 2 (lecturers) or 3 (students)
+    const usersSql = 'SELECT accountid, username, email, roleid FROM account WHERE roleid IN (2, 3)';
+    
+    connection.query(usersSql, (usersError, usersResults) => {
+      if (usersError) {
+        console.error('Error fetching users:', usersError);
+        return res.status(500).send('Error fetching users');
+      }
+      
+      // Get existing project members
+      const membersSql = `
+        SELECT pm.*, acc.username, acc.email, acc.roleid
+        FROM project_members pm
+        JOIN account acc ON pm.accountid = acc.accountid
+        WHERE pm.projectid = ?
+        ORDER BY acc.username
+      `;
+      
+      connection.query(membersSql, [projectid], (membersError, membersResults) => {
+        if (membersError) {
+          console.error('Error loading members:', membersError);
+          membersResults = []; // Continue without members if there's an error
+        }
+        
+        res.render('editISLP', { 
+          project: projectResults[0], 
+          users: usersResults,
+          existingMembers: membersResults 
+        });
+      });
+    });
   });
 });
 
 app.post('/editISLP/:projectid', checkAuthenticated, checkRole(1, 2), (req, res) => {
   const projectid = req.params.projectid;
-  const { project_title, project_head, description, project_start, project_end } = req.body;
+  const { project_title, project_head, description, project_start, project_end, members } = req.body;
+
+  // Parse members JSON string
+  let membersList = [];
+  if (members && members.trim() !== '') {
+    try {
+      membersList = JSON.parse(members);
+    } catch (error) {
+      console.error('Error parsing members:', error);
+      return res.status(400).send('Invalid members data');
+    }
+  }
 
   const updateFields = { project_title, project_head, description, project_start, project_end };
   const fields = Object.keys(updateFields);
@@ -259,9 +382,43 @@ app.post('/editISLP/:projectid', checkAuthenticated, checkRole(1, 2), (req, res)
 
   connection.query(sql, values, (error, results) => {
     if (error) return res.status(500).send('Error updating project');
-    res.redirect('/lecturer');
+    
+    // Update project members
+    updateProjectMembers(projectid, membersList, res);
   });
 });
+
+// Helper function to update project members
+function updateProjectMembers(projectId, membersList, res) {
+  // First, delete existing members
+  const deleteSql = 'DELETE FROM project_members WHERE projectid = ?';
+  
+  connection.query(deleteSql, [projectId], (deleteError) => {
+    if (deleteError) {
+      console.error('Error deleting existing members:', deleteError);
+      return res.status(500).send('Error updating members: ' + deleteError.message);
+    }
+    
+    // Insert new members if any
+    if (membersList && membersList.length > 0) {
+      const memberValues = membersList.map(member => [projectId, member.id]);
+      const insertMembersSql = 'INSERT INTO project_members (projectid, accountid) VALUES ?';
+      
+      connection.query(insertMembersSql, [memberValues], (membersError) => {
+        if (membersError) {
+          console.error('Error adding updated project members:', membersError);
+          return res.status(500).send('Error updating members: ' + membersError.message);
+        }
+        
+        console.log('Project members updated successfully');
+        res.redirect('/lecturer');
+      });
+    } else {
+      console.log('No members to add during update');
+      res.redirect('/lecturer');
+    }
+  });
+}
 
 app.get('/deleteISLP/:projectid', checkAuthenticated, checkRole(1, 2), (req, res) => {
   const projectid = req.params.projectid;
