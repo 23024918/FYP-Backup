@@ -180,10 +180,44 @@ app.get('/ISLP/:projectid', checkAuthenticated, (req, res) => {
           memberResults = []; // Continue without members if there's an error
         }
         
+        // Get facilitator details - project_head now contains a single lecturer ID
+        let facilitators = [];
+        if (projectResults[0].project_head) {
+          const lecturerId = projectResults[0].project_head;
+          
+          // Query database for facilitator details
+          const facilitatorSql = `
+            SELECT username, email, roleid
+            FROM account
+            WHERE accountid = ?
+            ORDER BY username
+          `;
+          
+          connection.query(facilitatorSql, [lecturerId], (facilitatorErr, facilitatorResults) => {
+            if (!facilitatorErr && facilitatorResults.length > 0) {
+              facilitators = facilitatorResults;
+            } else {
+              console.error('Error querying facilitator or facilitator not found:', facilitatorErr);
+            }
+            
+            res.render('ISLP', { 
+              project: projectResults[0], 
+              posts: postResults, 
+              members: memberResults,
+              facilitators: facilitators,
+              user: req.session.user 
+            });
+          });
+          return; // Exit early since we're handling the response in the callback
+        } else {
+          console.log('No project_head data found');
+        }
+        
         res.render('ISLP', { 
           project: projectResults[0], 
           posts: postResults, 
           members: memberResults,
+          facilitators: facilitators,
           user: req.session.user 
         });
       });
@@ -194,19 +228,38 @@ app.get('/ISLP/:projectid', checkAuthenticated, (req, res) => {
 
 
 app.get('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {
-  // Get users with role ID 2 (lecturers) or 3 (students)
-  const sql = 'SELECT accountid, username, email, roleid FROM account WHERE roleid IN (2, 3)';
-  connection.query(sql, (error, results) => {
-    if (error) {
-      console.error('Error fetching users:', error);
-      return res.status(500).send('Error fetching users');
+  // Get lecturers for project head dropdown (role ID 2)
+  const lecturersSql = 'SELECT accountid, username, email, roleid FROM account WHERE roleid = 2';
+  // Get students for members dropdown (role ID 3)
+  const studentsSql = 'SELECT accountid, username, email, roleid FROM account WHERE roleid = 3';
+  
+  connection.query(lecturersSql, (lecturerError, lecturerResults) => {
+    if (lecturerError) {
+      console.error('Error fetching lecturers:', lecturerError);
+      return res.status(500).send('Error fetching lecturers');
     }
-    res.render('addISLP', { users: results });
+    
+    connection.query(studentsSql, (studentError, studentResults) => {
+      if (studentError) {
+        console.error('Error fetching students:', studentError);
+        return res.status(500).send('Error fetching students');
+      }
+      
+      res.render('addISLP', { 
+        lecturers: lecturerResults,
+        students: studentResults 
+      });
+    });
   });
 });
 
 app.post('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {                         
   const { project_title, project_head, description, project_start, project_end, members } = req.body;
+  
+  // Validate that project_head is a valid lecturer ID
+  if (!project_head) {
+    return res.status(400).send('Project head (lecturer) is required');
+  }
   
   // Parse members JSON string
   let membersList = [];
@@ -324,34 +377,44 @@ app.get('/editISLP/:projectid', checkAuthenticated, checkRole(1, 2), (req, res) 
     if (error) return res.status(500).send('Error retrieving project by ID');
     if (projectResults.length === 0) return res.status(404).send('ISLP not found');
     
-    // Get users with role ID 2 (lecturers) or 3 (students)
-    const usersSql = 'SELECT accountid, username, email, roleid FROM account WHERE roleid IN (2, 3)';
+    // Get lecturers for project head dropdown (role ID 2)
+    const lecturersSql = 'SELECT accountid, username, email, roleid FROM account WHERE roleid = 2';
+    // Get students for members dropdown (role ID 3)
+    const studentsSql = 'SELECT accountid, username, email, roleid FROM account WHERE roleid = 3';
     
-    connection.query(usersSql, (usersError, usersResults) => {
-      if (usersError) {
-        console.error('Error fetching users:', usersError);
-        return res.status(500).send('Error fetching users');
+    connection.query(lecturersSql, (lecturerError, lecturerResults) => {
+      if (lecturerError) {
+        console.error('Error fetching lecturers:', lecturerError);
+        return res.status(500).send('Error fetching lecturers');
       }
       
-      // Get existing project members
-      const membersSql = `
-        SELECT pm.*, acc.username, acc.email, acc.roleid
-        FROM project_members pm
-        JOIN account acc ON pm.accountid = acc.accountid
-        WHERE pm.projectid = ?
-        ORDER BY acc.username
-      `;
-      
-      connection.query(membersSql, [projectid], (membersError, membersResults) => {
-        if (membersError) {
-          console.error('Error loading members:', membersError);
-          membersResults = []; // Continue without members if there's an error
+      connection.query(studentsSql, (studentError, studentResults) => {
+        if (studentError) {
+          console.error('Error fetching students:', studentError);
+          return res.status(500).send('Error fetching students');
         }
         
-        res.render('editISLP', { 
-          project: projectResults[0], 
-          users: usersResults,
-          existingMembers: membersResults 
+        // Get existing project members
+        const membersSql = `
+          SELECT pm.*, acc.username, acc.email, acc.roleid
+          FROM project_members pm
+          JOIN account acc ON pm.accountid = acc.accountid
+          WHERE pm.projectid = ?
+          ORDER BY acc.username
+        `;
+        
+        connection.query(membersSql, [projectid], (membersError, membersResults) => {
+          if (membersError) {
+            console.error('Error loading members:', membersError);
+            membersResults = []; // Continue without members if there's an error
+          }
+          
+          res.render('editISLP', { 
+            project: projectResults[0], 
+            lecturers: lecturerResults,
+            students: studentResults,
+            existingMembers: membersResults 
+          });
         });
       });
     });
@@ -361,6 +424,11 @@ app.get('/editISLP/:projectid', checkAuthenticated, checkRole(1, 2), (req, res) 
 app.post('/editISLP/:projectid', checkAuthenticated, checkRole(1, 2), (req, res) => {
   const projectid = req.params.projectid;
   const { project_title, project_head, description, project_start, project_end, members } = req.body;
+
+  // Validate that project_head is a valid lecturer ID
+  if (!project_head) {
+    return res.status(400).send('Project head (lecturer) is required');
+  }
 
   // Parse members JSON string
   let membersList = [];

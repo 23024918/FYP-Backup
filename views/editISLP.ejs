@@ -115,20 +115,16 @@
       border-radius: 15px;
       margin: 2px;
       font-size: 0.85rem;
+      cursor: pointer;
     }
 
-    .member-tag .remove-btn {
-      background: none;
-      border: none;
-      color: white;
+    .member-tag .remove {
       margin-left: 5px;
-      cursor: pointer;
       font-weight: bold;
     }
 
-    .member-tag .remove-btn:hover {
-      background-color: rgba(255, 255, 255, 0.2);
-      border-radius: 50%;
+    .member-tag:hover {
+      background-color: #333;
     }
 
     .no-members {
@@ -159,19 +155,28 @@
         </div>
 
         <div class="mb-4">
-          <label for="project_head" class="form-label">Project Head:</label>
-          <input type="text" class="form-control" id="project_head" name="project_head" value="<%= project.project_head %>" required>
+          <label for="project_head" class="form-label">Project Head (Lecturer):</label>
+          <select class="form-control" id="project_head" name="project_head" required>
+            <option value="">Select a lecturer...</option>
+            <% if (lecturers && lecturers.length > 0) { %>
+              <% lecturers.forEach(function(lecturer) { %>
+                <option value="<%= lecturer.accountid %>" <%= project.project_head == lecturer.accountid ? 'selected' : '' %>>
+                  <%= lecturer.username %> (<%= lecturer.email %>)
+                </option>
+              <% }); %>
+            <% } %>
+          </select>
         </div>
 
         <div class="mb-4">
-          <label for="members" class="form-label">Add Members:</label>
+          <label for="members" class="form-label">Add Members (Students only):</label>
           <div class="add-member">
             <select class="member-dropdown" id="userDropdown">
-              <option value="">Select a user to add...</option>
-              <% if (users && users.length > 0) { %>
-                <% users.forEach(function(user) { %>
-                  <option value="<%= user.accountid %>" data-username="<%= user.username %>" data-email="<%= user.email %>" data-role="<%= user.roleid %>">
-                    <%= user.username %> (<%= user.email %>) - <%= user.roleid === 2 ? 'Lecturer' : 'Student' %>
+              <option value="">Select a student to add...</option>
+              <% if (students && students.length > 0) { %>
+                <% students.forEach(function(student) { %>
+                  <option value="<%= student.accountid %>" data-username="<%= student.username %>" data-email="<%= student.email %>" data-role="<%= student.roleid %>">
+                    <%= student.username %> (<%= student.email %>)
                   </option>
                 <% }); %>
               <% } %>
@@ -192,11 +197,23 @@
         <div class="mb-4 date-group">
           <div>
             <label for="project_start" class="form-label">Start Date:</label>
-            <input type="date" class="form-control" id="project_start" name="project_start" value="<%= project.project_start.toISOString().slice(0, 10) %>" required>
+            <% 
+              var startDate = new Date(project.project_start);
+              var formattedStartDate = startDate.getFullYear() + '-' + 
+                                      String(startDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                                      String(startDate.getDate()).padStart(2, '0');
+            %>
+            <input type="date" class="form-control" id="project_start" name="project_start" value="<%= formattedStartDate %>" required>
           </div>
           <div>
             <label for="project_end" class="form-label">End Date:</label>
-            <input type="date" class="form-control" id="project_end" name="project_end" value="<%= project.project_end.toISOString().slice(0, 10) %>" required>
+            <% 
+              var endDate = new Date(project.project_end);
+              var formattedEndDate = endDate.getFullYear() + '-' + 
+                                    String(endDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                                    String(endDate.getDate()).padStart(2, '0');
+            %>
+            <input type="date" class="form-control" id="project_end" name="project_end" value="<%= formattedEndDate %>" required>
           </div>
         </div>
       </form>
@@ -217,23 +234,22 @@
         const username = memberElement.getAttribute('data-username');
         const email = memberElement.getAttribute('data-email');
         const role = memberElement.getAttribute('data-role');
-        const roleText = role === '2' ? 'Lecturer' : 'Student';
         
         selectedMembers.push({
           id: userId,
           username: username,
           email: email,
-          role: role,
-          roleText: roleText
+          role: role
         });
       });
       
       if (selectedMembers.length > 0) {
         updateMembersDisplay();
-        updateHiddenInput();
+        updateMembersHiddenInput();
       }
     });
 
+    // For members/students
     function addMember() {
       const dropdown = document.getElementById('userDropdown');
       const selectedOption = dropdown.options[dropdown.selectedIndex];
@@ -247,7 +263,6 @@
       const username = selectedOption.getAttribute('data-username');
       const email = selectedOption.getAttribute('data-email');
       const role = selectedOption.getAttribute('data-role');
-      const roleText = role === '2' ? 'Lecturer' : 'Student';
 
       // Check if user is already added
       if (selectedMembers.some(member => member.id === userId)) {
@@ -260,8 +275,7 @@
         id: userId,
         username: username,
         email: email,
-        role: role,
-        roleText: roleText
+        role: role
       });
 
       // Update the display
@@ -271,18 +285,17 @@
       dropdown.selectedIndex = 0;
       
       // Update hidden input
-      updateHiddenInput();
+      updateMembersHiddenInput();
     }
 
     function removeMember(userId) {
       selectedMembers = selectedMembers.filter(member => member.id !== userId);
       updateMembersDisplay();
-      updateHiddenInput();
+      updateMembersHiddenInput();
     }
 
     function updateMembersDisplay() {
       const container = document.getElementById('membersContainer');
-      const noMembersText = document.getElementById('noMembersText');
       
       if (selectedMembers.length === 0) {
         container.innerHTML = '<div class="no-members" id="noMembersText">No members added yet.</div>';
@@ -292,9 +305,8 @@
       let html = '';
       selectedMembers.forEach(member => {
         html += `
-          <div class="member-tag">
-            ${member.username} (${member.roleText})
-            <button type="button" class="remove-btn" onclick="removeMember('${member.id}')" title="Remove member">×</button>
+          <div class="member-tag" onclick="removeMember('${member.id}')">
+            ${member.username} (${member.email}) <span class="remove">×</span>
           </div>
         `;
       });
@@ -302,10 +314,44 @@
       container.innerHTML = html;
     }
 
-    function updateHiddenInput() {
+    function updateMembersHiddenInput() {
       const hiddenInput = document.getElementById('selectedMembers');
       hiddenInput.value = JSON.stringify(selectedMembers);
     }
+
+    // Date validation
+    document.addEventListener('DOMContentLoaded', function() {
+      const today = new Date().toISOString().split('T')[0];
+      const startDateInput = document.getElementById('project_start');
+      const endDateInput = document.getElementById('project_end');
+      
+      // Set minimum date to today
+      startDateInput.setAttribute('min', today);
+      endDateInput.setAttribute('min', today);
+      
+      // Add event listeners for date validation
+      startDateInput.addEventListener('change', function() {
+        const startDate = this.value;
+        if (startDate) {
+          endDateInput.setAttribute('min', startDate);
+          // If end date is before start date, clear it
+          if (endDateInput.value && endDateInput.value < startDate) {
+            endDateInput.value = '';
+            alert('End date cannot be before start date. Please select a valid end date.');
+          }
+        }
+      });
+      
+      endDateInput.addEventListener('change', function() {
+        const endDate = this.value;
+        const startDate = startDateInput.value;
+        
+        if (startDate && endDate && endDate < startDate) {
+          this.value = '';
+          alert('End date cannot be before start date. Please select a valid end date.');
+        }
+      });
+    });
   </script>
 
   <!-- Hidden elements to store existing member data -->

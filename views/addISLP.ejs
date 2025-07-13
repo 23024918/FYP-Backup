@@ -9,6 +9,8 @@
     body {
       background-color: white;
       font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 20px;
     }
 
     .main-content {
@@ -37,6 +39,7 @@
 
     input[type="text"],
     input[type="date"],
+    select,
     textarea {
       background-color: #d9d9d9;
       border: none;
@@ -115,20 +118,16 @@
       border-radius: 15px;
       margin: 2px;
       font-size: 0.85rem;
+      cursor: pointer;
     }
 
-    .member-tag .remove-btn {
-      background: none;
-      border: none;
-      color: white;
+    .member-tag .remove {
       margin-left: 5px;
-      cursor: pointer;
       font-weight: bold;
     }
 
-    .member-tag .remove-btn:hover {
-      background-color: rgba(255, 255, 255, 0.2);
-      border-radius: 50%;
+    .member-tag:hover {
+      background-color: #333;
     }
 
     .no-members {
@@ -156,19 +155,28 @@
       </div>
 
       <div class="mb-4">
-        <label for="project_head" class="form-label">Project Head:</label>
-        <input type="text" class="form-control" id="project_head" name="project_head" required>
+        <label for="project_head" class="form-label">Project Head (Lecturer):</label>
+        <select class="form-control" id="project_head" name="project_head" required>
+          <option value="">Select a lecturer...</option>
+          <% if (lecturers && lecturers.length > 0) { %>
+            <% lecturers.forEach(function(lecturer) { %>
+              <option value="<%= lecturer.accountid %>">
+                <%= lecturer.username %> (<%= lecturer.email %>)
+              </option>
+            <% }); %>
+          <% } %>
+        </select>
       </div>
 
       <div class="mb-4">
-        <label for="members" class="form-label">Add Members:</label>
+        <label for="members" class="form-label">Add Members (Students only):</label>
         <div class="add-member">
           <select class="member-dropdown" id="userDropdown">
-            <option value="">Select a user to add...</option>
-            <% if (users && users.length > 0) { %>
-              <% users.forEach(function(user) { %>
-                <option value="<%= user.accountid %>" data-username="<%= user.username %>" data-email="<%= user.email %>" data-role="<%= user.roleid %>">
-                  <%= user.username %> (<%= user.email %>) - <%= user.roleid === 2 ? 'Lecturer' : 'Student' %>
+            <option value="">Select a student to add...</option>
+            <% if (students && students.length > 0) { %>
+              <% students.forEach(function(student) { %>
+                <option value="<%= student.accountid %>" data-username="<%= student.username %>" data-email="<%= student.email %>" data-role="<%= student.roleid %>">
+                  <%= student.username %> (<%= student.email %>)
                 </option>
               <% }); %>
             <% } %>
@@ -196,84 +204,107 @@
           <input type="date" class="form-control" id="project_end" name="project_end" required>
         </div>
       </div>
+      
+      <div class="mb-4 text-center">
+        <button type="submit" class="btn btn-custom" style="background-color: black; color: white; padding: 10px 30px;">Create Project</button>
+      </div>
     </form>
   </div>
 
   <script>
     let selectedMembers = [];
 
+    // Member management functions
     function addMember() {
       const dropdown = document.getElementById('userDropdown');
-      const selectedOption = dropdown.options[dropdown.selectedIndex];
+      const userId = dropdown.value;
+      const userOption = dropdown.options[dropdown.selectedIndex];
       
-      if (selectedOption.value === '') {
-        alert('Please select a user to add.');
-        return;
+      if (userId && !selectedMembers.some(member => member.id === userId)) {
+        const member = {
+          id: userId,
+          username: userOption.dataset.username,
+          email: userOption.dataset.email,
+          role: userOption.dataset.role
+        };
+        
+        selectedMembers.push(member);
+        updateMembersDisplay();
+        updateMembersHiddenInput();
+        dropdown.value = '';
       }
-
-      const userId = selectedOption.value;
-      const username = selectedOption.getAttribute('data-username');
-      const email = selectedOption.getAttribute('data-email');
-      const role = selectedOption.getAttribute('data-role');
-      const roleText = role === '2' ? 'Lecturer' : 'Student';
-
-      // Check if user is already added
-      if (selectedMembers.some(member => member.id === userId)) {
-        alert('This user is already added to the project.');
-        return;
-      }
-
-      // Add to selected members array
-      selectedMembers.push({
-        id: userId,
-        username: username,
-        email: email,
-        role: role,
-        roleText: roleText
-      });
-
-      // Update the display
-      updateMembersDisplay();
-      
-      // Reset dropdown
-      dropdown.selectedIndex = 0;
-      
-      // Update hidden input
-      updateHiddenInput();
     }
 
-    function removeMember(userId) {
-      selectedMembers = selectedMembers.filter(member => member.id !== userId);
-      updateMembersDisplay();
-      updateHiddenInput();
+    function removeMember(memberId) {
+      const index = selectedMembers.findIndex(member => member.id === memberId);
+      if (index > -1) {
+        selectedMembers.splice(index, 1);
+        updateMembersDisplay();
+        updateMembersHiddenInput();
+      }
     }
 
     function updateMembersDisplay() {
       const container = document.getElementById('membersContainer');
-      const noMembersText = document.getElementById('noMembersText');
-      
       if (selectedMembers.length === 0) {
-        container.innerHTML = '<div class="no-members" id="noMembersText">No members added yet.</div>';
-        return;
+        container.innerHTML = '<div class="no-members">No members added yet.</div>';
+      } else {
+        container.innerHTML = selectedMembers.map(member => 
+          `<div class="member-tag" onclick="removeMember('${member.id}')">
+            ${member.username} (${member.email}) <span class="remove">×</span>
+          </div>`
+        ).join('');
       }
+    }
 
-      let html = '';
-      selectedMembers.forEach(member => {
-        html += `
-          <div class="member-tag">
-            ${member.username} (${member.roleText})
-            <button type="button" class="remove-btn" onclick="removeMember('${member.id}')" title="Remove member">×</button>
-          </div>
-        `;
+    function updateMembersHiddenInput() {
+      document.getElementById('selectedMembers').value = JSON.stringify(selectedMembers);
+    }
+
+    // Date validation and form submission
+    document.addEventListener('DOMContentLoaded', function() {
+      const today = new Date().toISOString().split('T')[0];
+      const startDateInput = document.getElementById('project_start');
+      const endDateInput = document.getElementById('project_end');
+      const form = document.getElementById('project-form');
+      
+      // Set minimum date to today
+      startDateInput.setAttribute('min', today);
+      endDateInput.setAttribute('min', today);
+      
+      // Add event listeners for date validation
+      startDateInput.addEventListener('change', function() {
+        const startDate = this.value;
+        if (startDate) {
+          endDateInput.setAttribute('min', startDate);
+          // If end date is before start date, clear it
+          if (endDateInput.value && endDateInput.value < startDate) {
+            endDateInput.value = '';
+            alert('End date cannot be before start date. Please select a valid end date.');
+          }
+        }
       });
       
-      container.innerHTML = html;
-    }
+      endDateInput.addEventListener('change', function() {
+        const endDate = this.value;
+        const startDate = startDateInput.value;
+        
+        if (startDate && endDate && endDate < startDate) {
+          this.value = '';
+          alert('End date cannot be before start date. Please select a valid end date.');
+        }
+      });
 
-    function updateHiddenInput() {
-      const hiddenInput = document.getElementById('selectedMembers');
-      hiddenInput.value = JSON.stringify(selectedMembers);
-    }
+      // Form submission validation
+      form.addEventListener('submit', function(e) {
+        const projectHead = document.getElementById('project_head').value;
+        if (!projectHead) {
+          e.preventDefault();
+          alert('Please select a lecturer as project head.');
+          return false;
+        }
+      });
+    });
   </script>
 
 </body>

@@ -47,6 +47,17 @@
       color: white;
     }
 
+    .logout-button {
+      margin-top: auto !important;
+      margin-bottom: 20px !important;
+      background-color: #dc3545 !important;
+      color: white !important;
+    }
+
+    .logout-button:hover {
+      background-color: #c82333 !important;
+    }
+
     .main-content {
       margin-left: 120px;
       padding: 40px;
@@ -106,6 +117,7 @@
     <a href="/lecturer">Home</a>
     <a href="/profile">Profile</a>
     <a href="/feedback">Feedback</a>
+    <a href="/logout" class="logout-button" onclick="return confirm('Are you sure you want to logout?');">Logout</a>
   </div>
 
   <!-- Main Content -->
