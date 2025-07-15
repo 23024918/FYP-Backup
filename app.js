@@ -179,19 +179,31 @@ app.get('/pending', checkAuthenticated, checkRole(1), (req, res) => {
 
 app.get('/search', checkAuthenticated, (req, res) => {
   const query = req.query.query;
-  let sql = `
-    SELECT p.*, s.name as project_status 
-    FROM project p 
-    LEFT JOIN status s ON p.status_statusid = s.statusid 
-    WHERE p.project_title LIKE ?
-  `;
+  let sql, queryParams;
   
-  // Students cannot see pending projects
   if (req.session.user.roleid === 3) {
-    sql += ` AND p.status_statusid != '1'`;
+    // Student search - include membership detection and exclude pending projects
+    sql = `
+      SELECT p.*, s.name as project_status,
+             CASE WHEN pm.accountid IS NOT NULL THEN 1 ELSE 0 END as is_member
+      FROM project p 
+      LEFT JOIN status s ON p.status_statusid = s.statusid
+      LEFT JOIN project_members pm ON p.projectid = pm.projectid AND pm.accountid = ?
+      WHERE p.project_title LIKE ? AND p.status_statusid != '1'
+    `;
+    queryParams = [req.session.user.accountid, `%${query}%`];
+  } else {
+    // Admin/Lecturer search - no membership detection needed
+    sql = `
+      SELECT p.*, s.name as project_status 
+      FROM project p 
+      LEFT JOIN status s ON p.status_statusid = s.statusid 
+      WHERE p.project_title LIKE ?
+    `;
+    queryParams = [`%${query}%`];
   }
   
-  connection.query(sql, [`%${query}%`], (error, searchResults) => {
+  connection.query(sql, queryParams, (error, searchResults) => {
     if (error) return res.status(500).send('Error searching for ISLP');
     res.render('searchResults', { 
       query, 

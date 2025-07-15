@@ -198,6 +198,9 @@
             <% if (parseInt(project.project_head) === currentUser.accountid) { %>
               <br><strong>Your project</strong>
             <% } %>
+            <% if (currentUser.roleid === 3 && project.is_member == 1) { %>
+              <br><strong>Member of project</strong>
+            <% } %>
           </small>
         </div>
       <% }) %>
