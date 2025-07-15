@@ -116,7 +116,7 @@
   <div class="sidebar">
     <a href="/lecturer">Home</a>
     <a href="/profile">Profile</a>
-    <a href="/feedback">Feedback</a>
+    <a href="/feedback">My Projects</a>
     <a href="/logout" class="logout-button" onclick="return confirm('Are you sure you want to logout?');">Logout</a>
   </div>
 
@@ -142,9 +142,11 @@
       <h5><%= project[i].project_title %></h5>
       <div>
         <a href="/ISLP/<%= project[i].projectid %>" class="btn btn-sm btn-outline-dark me-2">View</a>
-        <a href="/editISLP/<%= project[i].projectid %>" class="btn btn-sm btn-outline-dark me-2">Edit</a>
-        <a href="/deleteISLP/<%= project[i].projectid %>" class="btn btn-sm btn-outline-danger"
-           onclick="return confirm('Are you sure you want to delete this project?');">Delete</a>
+        <% if (currentUser.roleid === 1 || parseInt(project[i].project_head) === currentUser.accountid) { %>
+          <a href="/editISLP/<%= project[i].projectid %>" class="btn btn-sm btn-outline-dark me-2">Edit</a>
+          <a href="/deleteISLP/<%= project[i].projectid %>" class="btn btn-sm btn-outline-danger"
+             onclick="return confirm('Are you sure you want to delete this project?');">Delete</a>
+        <% } %>
       </div>
     </div>
     <small>
@@ -152,6 +154,9 @@
       Start Date: <%= new Date(project[i].project_start).toLocaleDateString('en-GB') %> |
       End Date: <%= new Date(project[i].project_end).toLocaleDateString('en-GB') %> |
       Status: <%= project[i].project_status %>
+      <% if (parseInt(project[i].project_head) === currentUser.accountid) { %>
+        <br><strong>Your project</strong>
+      <% } %>
     </small>
   </div>
 <% } %>

@@ -131,6 +131,15 @@
       color: #6c757d;
       font-style: italic;
     }
+
+    .info-box {
+      background-color: #d9d9d9;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+      color: #333;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -154,18 +163,11 @@
           <input type="text" class="form-control" id="project_title" name="project_title" value="<%= project.project_title %>" required>
         </div>
 
+        <!-- Note: Project head cannot be changed -->
         <div class="mb-4">
-          <label for="project_head" class="form-label">Project Head (Lecturer):</label>
-          <select class="form-control" id="project_head" name="project_head" required>
-            <option value="">Select a lecturer...</option>
-            <% if (lecturers && lecturers.length > 0) { %>
-              <% lecturers.forEach(function(lecturer) { %>
-                <option value="<%= lecturer.accountid %>" <%= project.project_head == lecturer.accountid ? 'selected' : '' %>>
-                  <%= lecturer.username %> (<%= lecturer.email %>)
-                </option>
-              <% }); %>
-            <% } %>
-          </select>
+          <div class="info-box">
+            <strong>Note:</strong> You remain as the project head. Project ownership cannot be transferred.
+          </div>
         </div>
 
         <div class="mb-4">

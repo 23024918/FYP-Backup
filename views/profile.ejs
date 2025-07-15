@@ -9,7 +9,6 @@
     <style>
         body {
             background-color: #f8f9fa;
-            font-family: 'Arial', sans-serif;
         }
 
         .sidebar {
@@ -46,6 +45,17 @@
         .sidebar a.active {
             background-color: black;
             color: white;
+        }
+
+        .logout-button {
+            margin-top: auto !important;
+            margin-bottom: 20px !important;
+            background-color: #dc3545 !important;
+            color: white !important;
+        }
+
+        .logout-button:hover {
+            background-color: #c82333 !important;
         }
 
         .main-content {
@@ -161,7 +171,8 @@
     <div class="sidebar">
         <a href="/lecturer">Home</a>
         <a href="/profile" class="active">Profile</a>
-        <a href="/feedback">Feedback</a>
+        <a href="/feedback">My Projects</a>
+        <a href="/logout" class="logout-button" onclick="return confirm('Are you sure you want to logout?');">Logout</a>
     </div>
 
     <!-- Main Content -->

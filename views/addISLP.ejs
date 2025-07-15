@@ -134,6 +134,15 @@
       color: #6c757d;
       font-style: italic;
     }
+
+    .info-box {
+      background-color: #d9d9d9;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+      color: #333;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -154,18 +163,11 @@
         <input type="text" class="form-control" id="project_title" name="project_title" required>
       </div>
 
+      <!-- Note: You will automatically be assigned as the project head -->
       <div class="mb-4">
-        <label for="project_head" class="form-label">Project Head (Lecturer):</label>
-        <select class="form-control" id="project_head" name="project_head" required>
-          <option value="">Select a lecturer...</option>
-          <% if (lecturers && lecturers.length > 0) { %>
-            <% lecturers.forEach(function(lecturer) { %>
-              <option value="<%= lecturer.accountid %>">
-                <%= lecturer.username %> (<%= lecturer.email %>)
-              </option>
-            <% }); %>
-          <% } %>
-        </select>
+        <div class="info-box">
+          <strong>Note:</strong> You will be assigned as the project head for this project.
+        </div>
       </div>
 
       <div class="mb-4">
@@ -297,12 +299,8 @@
 
       // Form submission validation
       form.addEventListener('submit', function(e) {
-        const projectHead = document.getElementById('project_head').value;
-        if (!projectHead) {
-          e.preventDefault();
-          alert('Please select a lecturer as project head.');
-          return false;
-        }
+        // No need to validate project head since it's automatically set
+        // Validation can be added here for other fields if needed
       });
     });
   </script>
