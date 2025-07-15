@@ -106,15 +106,43 @@
       font-style: italic;
       margin-top: 50px;
     }
+
+    .lecturer-badge, .student-badge, .admin-badge {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      z-index: 1000;
+    }
+    
+    .admin-badge {
+      background-color: red;
+    }
+    
+    .lecturer-badge {
+      background-color: black;
+    }
+    
+    .student-badge {
+      background-color: blue;
+    }
   </style>
 </head>
 <body>
 
   <!-- Sidebar -->
   <div class="sidebar">
-    <a href="/lecturer">Home</a>
+    <% if (currentUser && currentUser.roleid === 3) { %>
+      <a href="/student">Home</a>
+    <% } else { %>
+      <a href="/lecturer">Home</a>
+    <% } %>
     <a href="/profile">Profile</a>
-    <a href="/feedback">My Projects</a>
+    <a href="/myproject">My Projects</a>
     <a href="/logout" class="logout-button" onclick="return confirm('Are you sure you want to logout?');">Logout</a>
   </div>
 
@@ -132,9 +160,11 @@
             <h5><%= projects[i].project_title %></h5>
             <div>
               <a href="/ISLP/<%= projects[i].projectid %>" class="btn btn-sm btn-outline-dark me-2">View</a>
-              <a href="/editISLP/<%= projects[i].projectid %>" class="btn btn-sm btn-outline-dark me-2">Edit</a>
-              <a href="/deleteISLP/<%= projects[i].projectid %>" class="btn btn-sm btn-outline-danger"
-                 onclick="return confirm('Are you sure you want to delete this project?');">Delete</a>
+              <% if (currentUser && currentUser.roleid !== 3) { %>
+                <a href="/editISLP/<%= projects[i].projectid %>" class="btn btn-sm btn-outline-dark me-2">Edit</a>
+                <a href="/deleteISLP/<%= projects[i].projectid %>" class="btn btn-sm btn-outline-danger"
+                   onclick="return confirm('Are you sure you want to delete this project?');">Delete</a>
+              <% } %>
             </div>
           </div>
           <small>
@@ -142,17 +172,48 @@
             Start Date: <%= new Date(projects[i].project_start).toLocaleDateString('en-GB') %> |
             End Date: <%= new Date(projects[i].project_end).toLocaleDateString('en-GB') %> |
             Status: <%= projects[i].project_status %>
-            <br><strong>Your project</strong>
+            <br><strong><%= currentUser && currentUser.roleid === 3 ? 'Member of project' : 'Your project' %></strong>
           </small>
         </div>
       <% } %>
     <% } else { %>
       <div class="no-projects">
         <h4>No projects found</h4>
-        <p>You haven't created any projects yet. <a href="/addISLP">Create your first project</a>!</p>
+        <% if (currentUser && currentUser.roleid === 3) { %>
+          <p>You haven't joined any projects yet.</p>
+        <% } else { %>
+          <p>You haven't created any projects yet. <a href="/addISLP">Create your first project</a>!</p>
+        <% } %>
       </div>
     <% } %>
   </div>
+
+  <!-- Username Badge -->
+  <% if (currentUser && currentUser.roleid === 1) { %>
+    <div class="admin-badge">
+      <% if (currentUser && currentUser.username) { %>
+        <%= currentUser.username %>
+      <% } else { %>
+        Admin
+      <% } %>
+    </div>
+  <% } else if (currentUser && currentUser.roleid === 2) { %>
+    <div class="lecturer-badge">
+      <% if (currentUser && currentUser.username) { %>
+        <%= currentUser.username %>
+      <% } else { %>
+        Lecturer
+      <% } %>
+    </div>
+  <% } else if (currentUser && currentUser.roleid === 3) { %>
+    <div class="student-badge">
+      <% if (currentUser && currentUser.username) { %>
+        <%= currentUser.username %>
+      <% } else { %>
+        Student
+      <% } %>
+    </div>
+  <% } %>
 
 </body>
 </html>

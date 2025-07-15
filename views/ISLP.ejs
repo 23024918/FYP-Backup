@@ -100,6 +100,30 @@
       background-color: #d9d9d9 !important;
       border: none;
     }
+
+    .lecturer-badge, .student-badge, .admin-badge {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      z-index: 1000;
+    }
+    
+    .admin-badge {
+      background-color: red;
+    }
+    
+    .lecturer-badge {
+      background-color: black;
+    }
+    
+    .student-badge {
+      background-color: blue;
+    }
   </style>
 </head>
 <body>
@@ -107,10 +131,24 @@
   <div class="container-fluid">
     <!-- Header -->
     <div class="header">
-      <a href="/lecturer" class="back-link">< All Projects</a>
+      <% if (user && user.roleid === 3) { %>
+        <a href="/student" class="back-link">< All Projects</a>
+      <% } else if (user && user.roleid === 1) { %>
+        <a href="/admin" class="back-link">< All Projects</a>
+      <% } else { %>
+        <a href="/lecturer" class="back-link">< All Projects</a>
+      <% } %>
       <div class="header-buttons">
-        <a href="/addPost/<%= project.projectid %>" class="btn-custom">Add Post</a>
-        <a href="#" class="btn-custom">Sign up</a>
+        <% 
+          // All authenticated users can add posts to any project
+          let canAddPost = user ? true : false;
+        %>
+        <% if (canAddPost) { %>
+          <a href="/addPost/<%= project.projectid %>" class="btn-custom">Add Post</a>
+        <% } %>
+        <% if (user && user.roleid === 3) { %>
+          <a href="#" class="btn-custom">Sign up</a>
+        <% } %>
       </div>
     </div>
 
@@ -201,10 +239,6 @@
       <!-- Posts Section -->
       <div class="content-box posts-section">
         <h5>Posts:</h5>
-        <div class="posts-buttons">
-          <a href="#" class="btn btn-sm btn-outline-dark me-2">Edit</a>
-          <a href="#" class="btn btn-sm btn-outline-danger">Delete</a>
-        </div>
         <div class="posts-content">
           <% if (posts && posts.length > 0) { %>
             <% posts.forEach(post => { %>
@@ -212,11 +246,39 @@
                 <p><%= post.description %></p>
                 <small class="text-muted">By <%= post.username %> on <%= new Date(post.submission_date).toLocaleString() %></small>
                 
-                <% if (user && user.roleid === 2 && user.accountid === post.accountid) { %>
+                <% if (user && user.roleid === 1) { %>
+                  <!-- Admin can edit and delete any post -->
                   <div class="mt-2">
-                    <a href="/editPost/<%= post.submissionsid %>" class="btn btn-sm btn-outline-dark me-2">Edit</a>
+                    <% if (user.accountid === post.accountid) { %>
+                      <!-- Admin can edit their own posts -->
+                      <a href="/editPost/<%= post.submissionsid %>" class="btn btn-sm btn-outline-dark me-2">Edit</a>
+                    <% } %>
+                    <!-- Admin can always delete any post -->
                     <a href="/deletePost/<%= post.submissionsid %>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this post?')">Delete</a>
                   </div>
+                <% } else if (user && user.roleid === 2) { %>
+                  <% if (user.accountid === post.accountid) { %>
+                    <!-- Lecturer can edit and delete their own posts -->
+                    <div class="mt-2">
+                      <a href="/editPost/<%= post.submissionsid %>" class="btn btn-sm btn-outline-dark me-2">Edit</a>
+                      <a href="/deletePost/<%= post.submissionsid %>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this post?')">Delete</a>
+                    </div>
+                  <% } else if (post.author_roleid === 3) { %>
+                    <!-- Lecturer can delete student posts only -->
+                    <div class="mt-2">
+                      <a href="/deletePost/<%= post.submissionsid %>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this post?')">Delete</a>
+                    </div>
+                  <% } %>
+                  <!-- Lecturers cannot edit/delete other lecturer posts - no buttons shown -->
+                <% } else if (user && user.roleid === 3) { %>
+                  <% if (user.accountid === post.accountid) { %>
+                    <!-- Student can edit and delete their own posts only -->
+                    <div class="mt-2">
+                      <a href="/editPost/<%= post.submissionsid %>" class="btn btn-sm btn-outline-dark me-2">Edit</a>
+                      <a href="/deletePost/<%= post.submissionsid %>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this post?')">Delete</a>
+                    </div>
+                  <% } %>
+                  <!-- Students cannot edit/delete other people's posts - no buttons shown -->
                 <% } %>
               </div>
             <% }) %>
@@ -232,6 +294,33 @@
       </div>
     <% } %>
   </div>
+
+  <!-- Username Badge -->
+  <% if (user && user.roleid === 1) { %>
+    <div class="admin-badge">
+      <% if (user && user.username) { %>
+        <%= user.username %>
+      <% } else { %>
+        Admin
+      <% } %>
+    </div>
+  <% } else if (user && user.roleid === 2) { %>
+    <div class="lecturer-badge">
+      <% if (user && user.username) { %>
+        <%= user.username %>
+      <% } else { %>
+        Lecturer
+      <% } %>
+    </div>
+  <% } else if (user && user.roleid === 3) { %>
+    <div class="student-badge">
+      <% if (user && user.username) { %>
+        <%= user.username %>
+      <% } else { %>
+        Student
+      <% } %>
+    </div>
+  <% } %>
 
 </body>
 </html>

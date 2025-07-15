@@ -148,6 +148,34 @@
         .main-content {
             margin-left: 150px;
         }
+
+        /* Username badge styles */
+        .lecturer-badge,
+        .student-badge,
+        .admin-badge {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 1000;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            color: white;
+        }
+
+        .admin-badge {
+            background-color: red;
+        }
+
+        .lecturer-badge {
+            background-color: black;
+        }
+
+        .student-badge {
+            background-color: blue;
+        }
     </style>
 </head>
 <body>
@@ -305,6 +333,14 @@
             }
         });
     </script>
+
+    <!-- Username badge -->
+    <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+        <div class="<%= currentUser.roleid === 1 ? 'admin-badge' : currentUser.roleid === 2 ? 'lecturer-badge' : 'student-badge' %>">
+            <%= currentUser.username || currentUser.firstName %>
+        </div>
+    <% } %>
+
 </body>
 </html>
 

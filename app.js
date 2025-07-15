@@ -130,21 +130,67 @@ app.get('/lecturer', checkAuthenticated, checkRole(2), (req, res) => {
 });
 
 app.get('/student', checkAuthenticated, checkRole(3), (req, res) => {
-  res.render('studentDashboard');
+  const sql = `
+    SELECT p.*, s.name as project_status,
+           CASE WHEN pm.accountid IS NOT NULL THEN 1 ELSE 0 END as is_member
+    FROM project p 
+    LEFT JOIN status s ON p.status_statusid = s.statusid
+    LEFT JOIN project_members pm ON p.projectid = pm.projectid AND pm.accountid = ?
+    WHERE p.status_statusid != '1'
+  `;
+  connection.query(sql, [req.session.user.accountid], (error, results) => { 
+    if (error) throw error; 
+    res.render('student', { 
+      project: results,
+      currentUser: req.session.user 
+    }); 
+  }); 
 });
 
 app.get('/admin', checkAuthenticated, checkRole(1), (req, res) => {
-  res.render('adminPanel');
+  const sql = `
+    SELECT p.*, s.name as project_status 
+    FROM project p 
+    LEFT JOIN status s ON p.status_statusid = s.statusid
+  `;
+  connection.query(sql, (error, results) => { 
+    if (error) throw error; 
+    res.render('admin', { 
+      project: results,
+      currentUser: req.session.user 
+    }); 
+  }); 
+});
+
+app.get('/pending', checkAuthenticated, checkRole(1), (req, res) => {
+  const sql = `
+    SELECT p.*, s.name as project_status 
+    FROM project p 
+    LEFT JOIN status s ON p.status_statusid = s.statusid
+  `;
+  connection.query(sql, (error, results) => { 
+    if (error) throw error; 
+    res.render('pending', { 
+      project: results,
+      currentUser: req.session.user 
+    }); 
+  }); 
 });
 
 app.get('/search', checkAuthenticated, (req, res) => {
   const query = req.query.query;
-  const sql = `
+  let sql = `
     SELECT p.*, s.name as project_status 
     FROM project p 
     LEFT JOIN status s ON p.status_statusid = s.statusid 
     WHERE p.project_title LIKE ?
   `;
+  
+  // Students cannot see pending projects
+  if (req.session.user.roleid === 3) {
+    sql += ` AND p.status_statusid != '1'`;
+  }
+  
   connection.query(sql, [`%${query}%`], (error, searchResults) => {
     if (error) return res.status(500).send('Error searching for ISLP');
     res.render('searchResults', { 
@@ -166,7 +212,7 @@ app.get('/ISLP/:projectid', checkAuthenticated, (req, res) => {
   `;
 
   const postSql = `
-    SELECT sub.*, acc.username 
+    SELECT sub.*, acc.username, acc.roleid as author_roleid
     FROM submissions sub 
     JOIN account acc ON sub.accountid = acc.accountid 
     WHERE sub.projectid = ? 
@@ -245,6 +291,8 @@ app.get('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {
   const lecturersSql = 'SELECT accountid, username, email, roleid FROM account WHERE roleid = 2';
   // Get students for members dropdown (role ID 3)
   const studentsSql = 'SELECT accountid, username, email, roleid FROM account WHERE roleid = 3';
+  // Get all status options
+  const statusSql = 'SELECT statusid, name, description FROM status ORDER BY statusid';
   
   connection.query(lecturersSql, (lecturerError, lecturerResults) => {
     if (lecturerError) {
@@ -258,16 +306,25 @@ app.get('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {
         return res.status(500).send('Error fetching students');
       }
       
-      res.render('addISLP', { 
-        lecturers: lecturerResults,
-        students: studentResults 
+      connection.query(statusSql, (statusError, statusResults) => {
+        if (statusError) {
+          console.error('Error fetching status options:', statusError);
+          return res.status(500).send('Error fetching status options');
+        }
+        
+        res.render('addISLP', { 
+          lecturers: lecturerResults,
+          students: studentResults,
+          statusOptions: statusResults,
+          currentUser: req.session.user 
+        });
       });
     });
   });
 });
 
 app.post('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {                         
-  const { project_title, description, project_start, project_end, members } = req.body;
+  const { project_title, description, project_start, project_end, members, status_statusid } = req.body;
   
   // Current user automatically becomes the project head - no validation needed
   
@@ -282,45 +339,12 @@ app.post('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {
     }
   }
   
-  // First, check if "Pending" status exists
-  connection.query('SELECT statusid FROM status WHERE name = ?', ['Pending'], (statusError, statusResults) => {
-    if (statusError) {
-      console.error('Error checking for Pending status:', statusError);
-      return res.status(500).send('Error checking status: ' + statusError.message);
-    }
-    
-    let pendingStatusId;
-    
-    if (statusResults.length === 0) {
-      // "Pending" status doesn't exist, create it
-      console.log('Pending status not found, creating it...');
-      connection.query('INSERT INTO status (name, description) VALUES (?, ?)', 
-        ['Pending', 'Project is awaiting review or approval'], 
-        (insertError, insertResults) => {
-          if (insertError) {
-            console.error('Error creating Pending status:', insertError);
-            return res.status(500).send('Error creating status: ' + insertError.message);
-          }
-          
-          pendingStatusId = insertResults.insertId;
-          console.log('Created Pending status with ID:', pendingStatusId);
-                // Insert project with the new Pending status - use current user as project head
-      insertProjectWithMembers(project_title, req.session.user.accountid, description, project_start, project_end, pendingStatusId, membersList, res);
-        }
-      );
-    } else {
-      // Use existing "Pending" status
-      pendingStatusId = statusResults[0].statusid;
-      console.log('Using existing Pending status ID:', pendingStatusId);
-      
-      // Insert project with existing Pending status - use current user as project head
-      insertProjectWithMembers(project_title, req.session.user.accountid, description, project_start, project_end, pendingStatusId, membersList, res);
-    }
-  });
+  // Use the selected status directly
+  insertProjectWithMembers(project_title, req.session.user.accountid, description, project_start, project_end, status_statusid, membersList, res, req.session.user);
 });
 
 // Helper function to insert project and members
-function insertProjectWithMembers(project_title, project_head, description, project_start, project_end, statusId, membersList, res) {
+function insertProjectWithMembers(project_title, project_head, description, project_start, project_end, statusId, membersList, res, user) {
   const sql = 'INSERT INTO project (project_title, project_head, description, project_start, project_end, status_statusid) VALUES (?, ?, ?, ?, ?, ?)';
   connection.query(sql, [project_title, project_head, description, project_start, project_end, statusId], (error, results) => {
     if (error) {
@@ -333,16 +357,17 @@ function insertProjectWithMembers(project_title, project_head, description, proj
     
     // Insert members if any
     if (membersList && membersList.length > 0) {
-      insertProjectMembers(projectId, membersList, res);
+      insertProjectMembers(projectId, membersList, res, user);
     } else {
       console.log('No members to add');
-      res.redirect('/lecturer');
+      const redirectPath = user.roleid === 1 ? '/admin' : '/lecturer';
+      res.redirect(redirectPath);
     }
   });
 }
 
 // Helper function to insert project members
-function insertProjectMembers(projectId, membersList, res) {
+function insertProjectMembers(projectId, membersList, res, user) {
   // Create project_members table if it doesn't exist
   const createTableSql = `
     CREATE TABLE IF NOT EXISTS project_members (
@@ -373,7 +398,8 @@ function insertProjectMembers(projectId, membersList, res) {
       }
       
       console.log('Project members added successfully');
-      res.redirect('/lecturer');
+      const redirectPath = user.roleid === 1 ? '/admin' : '/lecturer';
+      res.redirect(redirectPath);
     });
   });
 }
@@ -399,6 +425,8 @@ app.get('/editISLP/:projectid', checkAuthenticated, checkRole(1, 2), (req, res) 
     const lecturersSql = 'SELECT accountid, username, email, roleid FROM account WHERE roleid = 2';
     // Get students for members dropdown (role ID 3)
     const studentsSql = 'SELECT accountid, username, email, roleid FROM account WHERE roleid = 3';
+    // Get all status options
+    const statusSql = 'SELECT statusid, name, description FROM status ORDER BY statusid';
     
     connection.query(lecturersSql, (lecturerError, lecturerResults) => {
       if (lecturerError) {
@@ -412,26 +440,35 @@ app.get('/editISLP/:projectid', checkAuthenticated, checkRole(1, 2), (req, res) 
           return res.status(500).send('Error fetching students');
         }
         
-        // Get existing project members
-        const membersSql = `
-          SELECT pm.*, acc.username, acc.email, acc.roleid
-          FROM project_members pm
-          JOIN account acc ON pm.accountid = acc.accountid
-          WHERE pm.projectid = ?
-          ORDER BY acc.username
-        `;
-        
-        connection.query(membersSql, [projectid], (membersError, membersResults) => {
-          if (membersError) {
-            console.error('Error loading members:', membersError);
-            membersResults = []; // Continue without members if there's an error
+        connection.query(statusSql, (statusError, statusResults) => {
+          if (statusError) {
+            console.error('Error fetching status options:', statusError);
+            return res.status(500).send('Error fetching status options');
           }
           
-          res.render('editISLP', { 
-            project: projectResults[0], 
-            lecturers: lecturerResults,
-            students: studentResults,
-            existingMembers: membersResults 
+          // Get existing project members
+          const membersSql = `
+            SELECT pm.*, acc.username, acc.email, acc.roleid
+            FROM project_members pm
+            JOIN account acc ON pm.accountid = acc.accountid
+            WHERE pm.projectid = ?
+            ORDER BY acc.username
+          `;
+          
+          connection.query(membersSql, [projectid], (membersError, membersResults) => {
+            if (membersError) {
+              console.error('Error loading members:', membersError);
+              membersResults = []; // Continue without members if there's an error
+            }
+            
+            res.render('editISLP', { 
+              project: projectResults[0], 
+              lecturers: lecturerResults,
+              students: studentResults,
+              existingMembers: membersResults,
+              statusOptions: statusResults,
+              currentUser: req.session.user 
+            });
           });
         });
       });
@@ -457,10 +494,10 @@ app.post('/editISLP/:projectid', checkAuthenticated, checkRole(1, 2), (req, res)
       return res.status(403).send('Access denied. You can only edit projects you created.');
     }
     
-    const { project_title, project_head, description, project_start, project_end, members } = req.body;
+    const { project_title, project_head, description, project_start, project_end, members, status_statusid } = req.body;
 
-    // Use the current user's accountid as project_head to maintain ownership
-    const actualProjectHead = req.session.user.accountid;
+    // Preserve original project head - don't change ownership unless admin explicitly wants to
+    const actualProjectHead = project.project_head; // Keep original owner
 
     // Parse members JSON string
     let membersList = [];
@@ -473,7 +510,7 @@ app.post('/editISLP/:projectid', checkAuthenticated, checkRole(1, 2), (req, res)
       }
     }
 
-    const updateFields = { project_title, project_head: actualProjectHead, description, project_start, project_end };
+    const updateFields = { project_title, project_head: actualProjectHead, description, project_start, project_end, status_statusid };
     const fields = Object.keys(updateFields);
     const values = Object.values(updateFields);
 
@@ -484,13 +521,13 @@ app.post('/editISLP/:projectid', checkAuthenticated, checkRole(1, 2), (req, res)
       if (error) return res.status(500).send('Error updating project');
       
       // Update project members
-      updateProjectMembers(projectid, membersList, res);
+      updateProjectMembers(projectid, membersList, res, req.session.user);
     });
   });
 });
 
 // Helper function to update project members
-function updateProjectMembers(projectId, membersList, res) {
+function updateProjectMembers(projectId, membersList, res, user) {
   // First, delete existing members
   const deleteSql = 'DELETE FROM project_members WHERE projectid = ?';
   
@@ -512,11 +549,13 @@ function updateProjectMembers(projectId, membersList, res) {
         }
         
         console.log('Project members updated successfully');
-        res.redirect('/lecturer');
+        const redirectPath = user.roleid === 1 ? '/admin' : '/lecturer';
+        res.redirect(redirectPath);
       });
     } else {
       console.log('No members to add during update');
-      res.redirect('/lecturer');
+      const redirectPath = user.roleid === 1 ? '/admin' : '/lecturer';
+      res.redirect(redirectPath);
     }
   });
 }
@@ -542,7 +581,8 @@ app.get('/deleteISLP/:projectid', checkAuthenticated, checkRole(1, 2), (req, res
     const sql = 'DELETE FROM project WHERE projectid = ?';
     connection.query(sql, [projectid], (error, results) => {
       if (error) return res.status(500).send('Error deleting project');
-      res.redirect('/lecturer');
+      const redirectPath = req.session.user.roleid === 1 ? '/admin' : '/lecturer';
+      res.redirect(redirectPath);
     });
   });
 });
@@ -636,34 +676,92 @@ app.get('/feedback', checkAuthenticated, checkRole(1, 2), (req, res) => {
   });
 });
 
-app.get('/addPost/:projectid', checkAuthenticated, checkRole(2), (req, res) => {
+app.get('/myproject', checkAuthenticated, (req, res) => {
+  if (req.session.user.roleid === 3) {
+    // Student: Get projects where they are members, excluding pending projects
+    const sql = `
+      SELECT p.*, s.name as project_status 
+      FROM project p 
+      LEFT JOIN status s ON p.status_statusid = s.statusid
+      INNER JOIN project_members pm ON p.projectid = pm.projectid
+      WHERE pm.accountid = ? AND p.status_statusid != '1'
+      ORDER BY p.projectid DESC
+    `;
+    
+    connection.query(sql, [req.session.user.accountid], (error, results) => {
+      if (error) {
+        console.error('Error fetching student projects:', error);
+        return res.status(500).send('Error loading your projects');
+      }
+      res.render('myproject', { 
+        projects: results,
+        currentUser: req.session.user 
+      });
+    });
+  } else {
+    // Lecturer/Admin: Get projects they created/own
+    const sql = `
+      SELECT p.*, s.name as project_status 
+      FROM project p 
+      LEFT JOIN status s ON p.status_statusid = s.statusid
+      WHERE p.project_head = ?
+      ORDER BY p.projectid DESC
+    `;
+    
+    connection.query(sql, [req.session.user.accountid], (error, results) => {
+      if (error) {
+        console.error('Error fetching user projects:', error);
+        return res.status(500).send('Error loading your projects');
+      }
+      res.render('myproject', { 
+        projects: results,
+        currentUser: req.session.user 
+      });
+    });
+  }
+});
+
+app.get('/addPost/:projectid', checkAuthenticated, checkRole(1, 2, 3), (req, res) => {
   const { projectid } = req.params;
-  connection.query('SELECT * FROM project WHERE projectid = ?', [projectid], (err, results) => {
-    if (err || results.length === 0) return res.status(404).send('Project not found');
-    res.render('addPost', { project: results[0] });
+  
+  // Get project details
+  const projectSql = 'SELECT * FROM project WHERE projectid = ?';
+  
+  connection.query(projectSql, [projectid], (err, projectResults) => {
+    if (err || projectResults.length === 0) return res.status(404).send('Project not found');
+    
+    const project = projectResults[0];
+    
+    // All authenticated users can add posts to any project
+    res.render('addPost', { project: project });
   });
 });
 
-app.post('/addPost/:projectid', checkAuthenticated, checkRole(2), (req, res) => {
+app.post('/addPost/:projectid', checkAuthenticated, checkRole(1, 2, 3), (req, res) => {
   const { projectid } = req.params;
   const { description } = req.body;
-  const accountid = req.session.user.accountid;
-
-  const sql = `
-    INSERT INTO submissions (accountid, projectid, description, submission_date)
-    VALUES (?, ?, ?, NOW())
-  `;
-
-  connection.query(sql, [accountid, projectid, description], (err, result) => {
-    if (err) {
-      console.error('Error inserting submission:', err);
-      return res.status(500).send('Failed to add submission');
-    }
-    res.redirect(`/ISLP/${projectid}`);
+  
+  // Get project details to verify it exists
+  const projectSql = 'SELECT * FROM project WHERE projectid = ?';
+  
+  connection.query(projectSql, [projectid], (err, projectResults) => {
+    if (err || projectResults.length === 0) return res.status(404).send('Project not found');
+    
+    // All authenticated users can add posts to any project
+    const accountid = req.session.user.accountid;
+    const sql = `INSERT INTO submissions (accountid, projectid, description, submission_date) VALUES (?, ?, ?, NOW())`;
+    
+    connection.query(sql, [accountid, projectid, description], (insertErr, result) => {
+      if (insertErr) {
+        console.error('Error inserting submission:', insertErr);
+        return res.status(500).send('Failed to add submission');
+      }
+      res.redirect(`/ISLP/${projectid}`);
+    });
   });
 });
 
-app.get('/editPost/:submissionsid', checkAuthenticated, checkRole(2), (req, res) => {
+app.get('/editPost/:submissionsid', checkAuthenticated, checkRole(1, 2, 3), (req, res) => {
   const { submissionsid } = req.params;
   const sql = 'SELECT submissionsid, projectid, description, accountid FROM submissions WHERE submissionsid = ?';
 
@@ -671,7 +769,7 @@ app.get('/editPost/:submissionsid', checkAuthenticated, checkRole(2), (req, res)
     if (err || results.length === 0) return res.status(404).send('Post not found');
     
     const post = results[0];
-    // Check if the current user is the creator of the post
+    // All users (including admin) can only edit posts they created
     if (post.accountid !== req.session.user.accountid) {
       return res.status(403).send('Access denied. You can only edit posts you created.');
     }
@@ -681,7 +779,7 @@ app.get('/editPost/:submissionsid', checkAuthenticated, checkRole(2), (req, res)
 });
 
 
-app.post('/editPost/:submissionsid', checkAuthenticated, checkRole(2), (req, res) => {
+app.post('/editPost/:submissionsid', checkAuthenticated, checkRole(1, 2, 3), (req, res) => {
   const { submissionsid } = req.params;
   const { description } = req.body;
 
@@ -691,7 +789,7 @@ app.post('/editPost/:submissionsid', checkAuthenticated, checkRole(2), (req, res
     if (checkErr || checkResults.length === 0) return res.status(404).send('Post not found');
     
     const post = checkResults[0];
-    // Check if the current user is the creator of the post
+    // All users (including admin) can only edit posts they created
     if (post.accountid !== req.session.user.accountid) {
       return res.status(403).send('Access denied. You can only edit posts you created.');
     }
@@ -704,18 +802,34 @@ app.post('/editPost/:submissionsid', checkAuthenticated, checkRole(2), (req, res
   });
 });
 
-app.get('/deletePost/:submissionsid', checkAuthenticated, checkRole(2), (req, res) => {
+app.get('/deletePost/:submissionsid', checkAuthenticated, checkRole(1, 2, 3), (req, res) => {
   const { submissionsid } = req.params;
 
   // Get post details and check ownership
-  const getPostSql = 'SELECT projectid, accountid FROM submissions WHERE submissionsid = ?';
+  const getPostSql = `
+    SELECT s.projectid, s.accountid, a.roleid as post_author_role
+    FROM submissions s
+    JOIN account a ON s.accountid = a.accountid
+    WHERE s.submissionsid = ?
+  `;
   connection.query(getPostSql, [submissionsid], (err, results) => {
     if (err || results.length === 0) return res.status(404).send('Post not found');
     
     const post = results[0];
-    // Check if the current user is the creator of the post
-    if (post.accountid !== req.session.user.accountid) {
-      return res.status(403).send('Access denied. You can only delete posts you created.');
+    
+    // Check permissions based on user role
+    if (req.session.user.roleid === 1) {
+      // Admin can delete any post - no restrictions
+    } else if (req.session.user.roleid === 3) {
+      // Students can only delete their own posts
+      if (post.accountid !== req.session.user.accountid) {
+        return res.status(403).send('Access denied. Students can only delete posts they created.');
+      }
+    } else if (req.session.user.roleid === 2) {
+      // Lecturers can delete their own posts OR student posts, but NOT other lecturer posts
+      if (post.accountid !== req.session.user.accountid && post.post_author_role === 2) {
+        return res.status(403).send('Access denied. Lecturers cannot delete posts created by other lecturers.');
+      }
     }
     
     const projectid = post.projectid;

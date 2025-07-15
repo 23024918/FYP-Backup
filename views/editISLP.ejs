@@ -140,6 +140,35 @@
       color: #333;
       font-weight: bold;
     }
+
+    /* Username badge styles */
+    .lecturer-badge,
+    .student-badge {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 8px 12px;
+      border-radius: 15px;
+      font-size: 14px;
+      font-weight: bold;
+      z-index: 1000;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .lecturer-badge {
+      background-color: black;
+      color: white;
+    }
+
+    .student-badge {
+      background-color: blue;
+      color: white;
+    }
+
+    .admin-badge {
+      background-color: red;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -147,7 +176,11 @@
   <div class="main-content">
     <!-- Top bar with Back and Update buttons -->
     <div class="top-bar">
-      <a href="/lecturer" class="btn btn-custom">Back</a>
+      <% if (currentUser && currentUser.roleid === 1) { %>
+        <a href="/admin" class="btn btn-custom">Back</a>
+      <% } else { %>
+        <a href="/lecturer" class="btn btn-custom">Back</a>
+      <% } %>
       <% if (project) { %>
         <button form="project-form" type="submit" class="btn btn-custom">Update</button>
       <% } %>
@@ -195,6 +228,22 @@
           <label for="description" class="form-label">Add Description:</label>
           <textarea class="form-control" id="description" name="description" required><%= project.description %></textarea>
         </div>
+
+        <% if (currentUser && currentUser.roleid === 1) { %>
+          <div class="mb-4">
+            <label for="status" class="form-label">Project Status:</label>
+            <select class="form-control" id="status" name="status_statusid" required>
+              <% if (statusOptions && statusOptions.length > 0) { %>
+                <% statusOptions.forEach(function(status) { %>
+                  <option value="<%= status.statusid %>" <%= project.status_statusid == status.statusid ? 'selected' : '' %>><%= status.name %></option>
+                <% }); %>
+              <% } %>
+            </select>
+          </div>
+        <% } else { %>
+          <!-- Lecturers cannot change status, keep current status -->
+          <input type="hidden" name="status_statusid" value="<%= project.status_statusid %>">
+        <% } %>
 
         <div class="mb-4 date-group">
           <div>
@@ -366,6 +415,13 @@
            data-role="<%= member.roleid %>">
       </div>
     <% }); %>
+  <% } %>
+
+  <!-- Username badge -->
+  <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+    <div class="<%= currentUser.roleid === 1 ? 'admin-badge' : currentUser.roleid === 2 ? 'lecturer-badge' : 'student-badge' %>">
+      <%= currentUser.username %>
+    </div>
   <% } %>
 
 </body>

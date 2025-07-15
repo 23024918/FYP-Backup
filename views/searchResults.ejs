@@ -43,6 +43,17 @@
       color: white;
     }
 
+    .logout-button {
+      margin-top: auto !important;
+      margin-bottom: 20px !important;
+      background-color: #dc3545 !important;
+      color: white !important;
+    }
+
+    .logout-button:hover {
+      background-color: #c82333 !important;
+    }
+
     .main-content {
       margin-left: 120px;
       padding: 40px;
@@ -60,6 +71,30 @@
       font-weight: bold;
       font-size: 2rem;
       margin: 0;
+    }
+
+    .lecturer-badge, .student-badge, .admin-badge {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      z-index: 1000;
+    }
+    
+    .admin-badge {
+      background-color: red;
+    }
+    
+    .lecturer-badge {
+      background-color: black;
+    }
+    
+    .student-badge {
+      background-color: blue;
     }
 
     .search-container {
@@ -107,9 +142,22 @@
 
   <!-- Sidebar -->
   <div class="sidebar">
-    <a href="/lecturer">Home</a>
-    <a href="/profile">Profile</a>
-    <a href="/feedback">Feedback</a>
+    <% if (currentUser.roleid === 2) { %>
+      <a href="/lecturer">Home</a>
+      <a href="/profile">Profile</a>
+      <a href="/feedback">My Projects</a>
+      <a href="/logout" class="logout-button" onclick="return confirm('Are you sure you want to logout?');">Logout</a>
+    <% } else if (currentUser.roleid === 3) { %>
+      <a href="/student">Home</a>
+      <a href="/profile">Profile</a>
+      <a href="/myproject">My Projects</a>
+      <a href="/logout" class="logout-button" onclick="return confirm('Are you sure you want to logout?');">Logout</a>
+    <% } else { %>
+      <a href="/admin">Home</a>
+      <a href="/profile">Profile</a>
+      <a href="/pending">Pending</a>
+      <a href="/logout" class="logout-button" onclick="return confirm('Are you sure you want to logout?');">Logout</a>
+    <% } %>
   </div>
 
   <!-- Main Content -->
@@ -159,9 +207,42 @@
 
     <!-- Back to Home -->
     <div class="back-btn">
-      <a href="/lecturer" class="btn btn-dark">Back to Home</a>
+      <% if (currentUser.roleid === 2) { %>
+        <a href="/lecturer" class="btn btn-dark">Back to Home</a>
+      <% } else if (currentUser.roleid === 3) { %>
+        <a href="/student" class="btn btn-dark">Back to Home</a>
+      <% } else { %>
+        <a href="/admin" class="btn btn-dark">Back to Home</a>
+      <% } %>
     </div>
   </div>
+
+  <!-- Username Badge -->
+  <% if (currentUser && currentUser.roleid === 1) { %>
+    <div class="admin-badge">
+      <% if (currentUser && currentUser.username) { %>
+        <%= currentUser.username %>
+      <% } else { %>
+        Admin
+      <% } %>
+    </div>
+  <% } else if (currentUser && currentUser.roleid === 2) { %>
+    <div class="lecturer-badge">
+      <% if (currentUser && currentUser.username) { %>
+        <%= currentUser.username %>
+      <% } else { %>
+        Lecturer
+      <% } %>
+    </div>
+  <% } else if (currentUser && currentUser.roleid === 3) { %>
+    <div class="student-badge">
+      <% if (currentUser && currentUser.username) { %>
+        <%= currentUser.username %>
+      <% } else { %>
+        Student
+      <% } %>
+    </div>
+  <% } %>
 
 </body>
 </html>

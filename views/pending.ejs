@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pending Projects</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+
+    .sidebar {
+      width: 120px;
+      height: 100vh;
+      background-color: #d9d9d9;
+      position: fixed;
+      top: 0;
+      left: 0;
+      padding-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .sidebar a {
+      width: 80px;
+      height: 80px;
+      margin: 10px 0;
+      background-color: #c4c4c4;
+      color: black;
+      text-align: center;
+      line-height: 80px;
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .sidebar a:hover {
+      background-color: #b0b0b0;
+    }
+
+    .sidebar a:nth-child(3) {
+      background-color: black;
+      color: white;
+    }
+
+    .logout-button {
+      margin-top: auto !important;
+      margin-bottom: 20px !important;
+      background-color: #dc3545 !important;
+      color: white !important;
+    }
+
+    .logout-button:hover {
+      background-color: #c82333 !important;
+    }
+
+    .main-content {
+      margin-left: 120px;
+      padding: 40px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 30px;
+      position: relative;
+    }
+
+    .dashboard-title {
+      font-weight: bold;
+      font-size: 2rem;
+      margin: 0;
+    }
+
+    .add-button {
+      position: absolute;
+      right: 0;
+      background-color: black;
+      color: white;
+      font-weight: bold;
+      border: none;
+    }
+
+    .search-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+
+    .dashboard-box {
+      background-color: #d9d9d9;
+      border-radius: 20px;
+      min-height: 100px;
+      margin: 20px auto;
+      width: 80%;
+      padding: 15px 25px;
+    }
+
+    .dashboard-box h5 {
+      font-weight: bold;
+    }
+
+    .dashboard-box small {
+      color: #555;
+    }
+
+    .stats-section {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 30px;
+      gap: 20px;
+    }
+
+    .stat-card {
+      background-color: white;
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      flex: 1;
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: black;
+    }
+
+    .stat-label {
+      color: #666;
+      font-size: 0.9rem;
+      margin-top: 5px;
+    }
+
+    .admin-badge {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: red;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <a href="/admin">Home</a>
+    <a href="/profile">Profile</a>
+    <a href="/pending">Pending</a>
+    <a href="/logout" class="logout-button" onclick="return confirm('Are you sure you want to logout?');">Logout</a>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="top-bar">
+      <h2 class="dashboard-title">Pending Projects</h2>
+    </div>
+
+    <!-- Filter to show only pending projects -->
+    <% 
+      let pendingProjects = [];
+      if (project && project.length > 0) {
+        pendingProjects = project.filter(p => p.project_status === 'Pending');
+      }
+    %>
+
+    <% if (pendingProjects.length > 0) { %>
+      <% pendingProjects.forEach(function(proj) { %>
+        <div class="dashboard-box">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5><%= proj.project_title %></h5>
+            <div>
+              <a href="/ISLP/<%= proj.projectid %>" class="btn btn-sm btn-outline-dark me-2">View</a>
+              <!-- Admin can edit and delete all projects -->
+              <a href="/editISLP/<%= proj.projectid %>" class="btn btn-sm btn-outline-dark me-2">Edit</a>
+              <a href="/deleteISLP/<%= proj.projectid %>" class="btn btn-sm btn-outline-danger"
+                 onclick="return confirm('Are you sure you want to delete this project?');">Delete</a>
+            </div>
+          </div>
+          <small>
+            Description: <%= proj.description %> <br>
+            Start Date: <%= new Date(proj.project_start).toLocaleDateString('en-GB') %> |
+            End Date: <%= new Date(proj.project_end).toLocaleDateString('en-GB') %> |
+            Status: <%= proj.project_status %>
+            <% if (parseInt(proj.project_head) === currentUser.accountid) { %>
+              <br><strong>Your project</strong>
+            <% } %>
+          </small>
+        </div>
+      <% }); %>
+    <% } else { %>
+      <div class="dashboard-box">
+        <div class="text-center">
+          <h5>No Pending Projects</h5>
+          <small>There are currently no projects awaiting approval.</small>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Username badge -->
+  <div class="admin-badge">
+    <% if (currentUser && currentUser.username) { %>
+      <%= currentUser.username %>
+    <% } else { %>
+      Admin
+    <% } %>
+  </div>
+
+</body>
+</html>

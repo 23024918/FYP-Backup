@@ -164,14 +164,48 @@
             text-align: center;
             margin-top: 30px;
         }
+
+        .lecturer-badge, .student-badge, .admin-badge {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            z-index: 1000;
+        }
+        
+        .admin-badge {
+            background-color: red;
+        }
+        
+        .lecturer-badge {
+            background-color: black;
+        }
+        
+        .student-badge {
+            background-color: blue;
+        }
     </style>
 </head>
 <body>
     <!-- Sidebar -->
     <div class="sidebar">
-        <a href="/lecturer">Home</a>
-        <a href="/profile" class="active">Profile</a>
-        <a href="/feedback">My Projects</a>
+        <% if (user && user.roleid === 3) { %>
+            <a href="/student">Home</a>
+            <a href="/profile" class="active">Profile</a>
+            <a href="/myproject">My Projects</a>
+        <% } else if (user && user.roleid === 2) { %>
+            <a href="/lecturer">Home</a>
+            <a href="/profile" class="active">Profile</a>
+            <a href="/myproject">My Projects</a>
+        <% } else if (user && user.roleid === 1) { %>
+            <a href="/admin">Home</a>
+            <a href="/profile" class="active">Profile</a>
+            <a href="/pending">Pending</a>
+        <% } %>
         <a href="/logout" class="logout-button" onclick="return confirm('Are you sure you want to logout?');">Logout</a>
     </div>
 
@@ -287,6 +321,34 @@
             }
         });
     </script>
+
+    <!-- Username Badge -->
+    <% if (user && user.roleid === 1) { %>
+        <div class="admin-badge">
+            <% if (user && user.username) { %>
+                <%= user.username %>
+            <% } else { %>
+                Admin
+            <% } %>
+        </div>
+    <% } else if (user && user.roleid === 2) { %>
+        <div class="lecturer-badge">
+            <% if (user && user.username) { %>
+                <%= user.username %>
+            <% } else { %>
+                Lecturer
+            <% } %>
+        </div>
+    <% } else if (user && user.roleid === 3) { %>
+        <div class="student-badge">
+            <% if (user && user.username) { %>
+                <%= user.username %>
+            <% } else { %>
+                Student
+            <% } %>
+        </div>
+    <% } %>
+
 </body>
 </html>
 
