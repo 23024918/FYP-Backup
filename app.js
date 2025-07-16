@@ -89,7 +89,6 @@ app.post('/login', (req, res) => {
 
     if (results.length > 0) {
       req.session.user = results[0];
-      req.flash('success', 'Login successful!');
 
       // Redirect based on roleid
       if (results[0].roleid === 1) {
@@ -854,7 +853,120 @@ app.get('/deletePost/:submissionsid', checkAuthenticated, checkRole(1, 2, 3), (r
   });
 });
 
+// Signup routes for students to join projects
+app.get('/signup/:projectid', checkAuthenticated, checkRole(3), (req, res) => {
+  const projectid = req.params.projectid;
+  
+  // Get project details
+  const projectSql = `
+    SELECT p.*, s.name as project_status 
+    FROM project p 
+    LEFT JOIN status s ON p.status_statusid = s.statusid 
+    WHERE p.projectid = ?
+  `;
+  
+  connection.query(projectSql, [projectid], (err, projectResults) => {
+    if (err) {
+      console.error('Error fetching project:', err);
+      return res.status(500).send('Error fetching project details');
+    }
+    
+    if (projectResults.length === 0) {
+      return res.status(404).send('Project not found');
+    }
+    
+    const project = projectResults[0];
+    
+    // Check if project is available for signup (not pending)
+    if (project.status_statusid === '1') {
+      req.flash('error', 'This project is still pending approval and not available for signup.');
+      return res.redirect('/student');
+    }
+    
+    // Check if student is already a member
+    const memberCheckSql = `
+      SELECT * FROM project_members 
+      WHERE projectid = ? AND accountid = ?
+    `;
+    
+    connection.query(memberCheckSql, [projectid, req.session.user.accountid], (memberErr, memberResults) => {
+      if (memberErr) {
+        console.error('Error checking membership:', memberErr);
+        return res.status(500).send('Error checking membership status');
+      }
+      
+      const isMember = memberResults.length > 0;
+      
+      res.render('signup', {
+        project: project,
+        currentUser: req.session.user,
+        isMember: isMember,
+        errors: req.flash('error'),
+        messages: req.flash('success')
+      });
+    });
+  });
+});
 
+app.post('/signup/:projectid', checkAuthenticated, checkRole(3), (req, res) => {
+  const projectid = req.params.projectid;
+  const studentId = req.session.user.accountid;
+  
+  // Check if project exists and is available for signup
+  const projectSql = `
+    SELECT * FROM project 
+    WHERE projectid = ? AND status_statusid != '1'
+  `;
+  
+  connection.query(projectSql, [projectid], (projectErr, projectResults) => {
+    if (projectErr) {
+      console.error('Error fetching project:', projectErr);
+      req.flash('error', 'Error processing signup request.');
+      return res.redirect(`/signup/${projectid}`);
+    }
+    
+    if (projectResults.length === 0) {
+      req.flash('error', 'Project not found or not available for signup.');
+      return res.redirect('/student');
+    }
+    
+    // Check if student is already a member
+    const memberCheckSql = `
+      SELECT * FROM project_members 
+      WHERE projectid = ? AND accountid = ?
+    `;
+    
+    connection.query(memberCheckSql, [projectid, studentId], (memberErr, memberResults) => {
+      if (memberErr) {
+        console.error('Error checking membership:', memberErr);
+        req.flash('error', 'Error checking membership status.');
+        return res.redirect(`/signup/${projectid}`);
+      }
+      
+      if (memberResults.length > 0) {
+        req.flash('error', 'You are already a member of this project.');
+        return res.redirect(`/signup/${projectid}`);
+      }
+      
+      // Add student as project member
+      const insertMemberSql = `
+        INSERT INTO project_members (projectid, accountid) 
+        VALUES (?, ?)
+      `;
+      
+      connection.query(insertMemberSql, [projectid, studentId], (insertErr, insertResults) => {
+        if (insertErr) {
+          console.error('Error adding project member:', insertErr);
+          req.flash('error', 'Error joining project. Please try again.');
+          return res.redirect(`/signup/${projectid}`);
+        }
+        
+        req.flash('success', 'Successfully joined the project! You are now a member.');
+        res.redirect(`/signup/${projectid}`);
+      });
+    });
+  });
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}/login`));
