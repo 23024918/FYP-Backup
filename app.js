@@ -334,8 +334,9 @@ app.get('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {
   });
 });
 
-app.post('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {                         
+app.post('/addISLP', checkAuthenticated, checkRole(1, 2), upload.single('project_image'), (req, res) => {                         
   const { project_title, description, project_start, project_end, members, status_statusid } = req.body;
+  const project_image = req.file ? req.file.filename : null; // Get uploaded image filename
   
   // Current user automatically becomes the project head - no validation needed
   
@@ -351,13 +352,13 @@ app.post('/addISLP', checkAuthenticated, checkRole(1, 2), (req, res) => {
   }
   
   // Use the selected status directly
-  insertProjectWithMembers(project_title, req.session.user.accountid, description, project_start, project_end, status_statusid, membersList, res, req.session.user);
+  insertProjectWithMembers(project_title, req.session.user.accountid, description, project_start, project_end, status_statusid, project_image, membersList, res, req.session.user);
 });
 
 // Helper function to insert project and members
-function insertProjectWithMembers(project_title, project_head, description, project_start, project_end, statusId, membersList, res, user) {
-  const sql = 'INSERT INTO project (project_title, project_head, description, project_start, project_end, status_statusid) VALUES (?, ?, ?, ?, ?, ?)';
-  connection.query(sql, [project_title, project_head, description, project_start, project_end, statusId], (error, results) => {
+function insertProjectWithMembers(project_title, project_head, description, project_start, project_end, statusId, project_image, membersList, res, user) {
+  const sql = 'INSERT INTO project (project_title, project_head, description, project_start, project_end, status_statusid, project_image) VALUES (?, ?, ?, ?, ?, ?, ?)';
+  connection.query(sql, [project_title, project_head, description, project_start, project_end, statusId, project_image], (error, results) => {
     if (error) {
       console.error('Error adding project:', error);
       return res.status(500).send('Error adding project: ' + error.message);

@@ -39,6 +39,7 @@
 
     input[type="text"],
     input[type="date"],
+    input[type="file"],
     select,
     textarea {
       background-color: #d9d9d9;
@@ -190,7 +191,7 @@
     <div class="dashboard-title">Create New Project</div>
 
     <!-- Project Form -->
-    <form id="project-form" action="/addISLP" method="POST">
+    <form id="project-form" action="/addISLP" method="POST" enctype="multipart/form-data">
       <div class="mb-4">
         <label for="project_title" class="form-label">Project Name:</label>
         <input type="text" class="form-control" id="project_title" name="project_title" required>
@@ -227,6 +228,12 @@
       <div class="mb-4">
         <label for="description" class="form-label">Add Description:</label>
         <textarea class="form-control" id="description" name="description" required></textarea>
+      </div>
+
+      <div class="mb-4">
+        <label for="project_image" class="form-label">Project Image (Optional):</label>
+        <input type="file" class="form-control" id="project_image" name="project_image" accept="image/*">
+        <small class="text-muted">Supported formats: JPG, PNG, GIF (Max 5MB)</small>
       </div>
 
       <% if (currentUser && currentUser.roleid === 1) { %>
